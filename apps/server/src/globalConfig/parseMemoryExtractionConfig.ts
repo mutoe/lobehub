@@ -201,12 +201,14 @@ const parsePersonaWriterAgent = (
     process.env.MEMORY_USER_MEMORY_PERSONA_WRITER_PROVIDER ||
     fallbackProvider ||
     DEFAULT_MINI_PROVIDER;
+  const language = process.env.MEMORY_USER_MEMORY_PERSONA_WRITER_LANGUAGE || 'English';
 
   return {
     apiKey: process.env.MEMORY_USER_MEMORY_PERSONA_WRITER_API_KEY ?? fallbackApiKey,
     baseURL: process.env.MEMORY_USER_MEMORY_PERSONA_WRITER_BASE_URL,
     // Keep this below the model hard limit; see the headroom notice above.
     contextLimit: parseTokenLimitEnv(process.env.MEMORY_USER_MEMORY_PERSONA_WRITER_CONTEXT_LIMIT),
+    language,
     model,
     provider,
   };
