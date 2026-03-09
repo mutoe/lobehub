@@ -12,6 +12,7 @@ import {
 import type { UserServiceModelConfig } from '@lobechat/types';
 import { desc, eq } from 'drizzle-orm';
 
+import { UserModel } from '@/database/models/user';
 import { getBusinessModelRuntimeHooks } from '@/business/server/model-runtime';
 import { UserModel } from '@/database/models/user';
 import { UserMemoryModel } from '@/database/models/userMemory';
@@ -142,7 +143,7 @@ export class UserPersonaService {
 
     const agentResult = await extractor.toolCall({
       existingPersona: existingPersonaBaseline || undefined,
-      language: payload.language || this.preferredLanguage,
+      language: payload.language || this.preferredLanguage || 'en-US',
       personaNotes: payload.personaNotes,
       recentEvents: payload.recentEvents,
       retrievedMemories: payload.retrievedMemories,
@@ -225,8 +226,11 @@ export const buildUserPersonaJobInput = async (db: LobeChatDatabase, userId: str
     : '';
   const assembledContext = trimmedContext?.trim();
 
+  const { responseLanguage } = await UserModel.getInfoForAIGeneration(db, userId);
+
   return {
     existingPersona: latestPersona?.persona || undefined,
+    language: responseLanguage?.trim() || 'en-US',
     memoryIds: memories.map((m) => m.id),
     retrievedMemories: assembledContext || undefined,
   };
