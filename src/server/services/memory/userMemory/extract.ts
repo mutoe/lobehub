@@ -1230,7 +1230,7 @@ export class MemoryExtractionExecutor {
             this.getAiProviderRuntimeState(job.userId),
           ]);
           const keyVaults = await this.resolveRuntimeKeyVaults(aiProviderRuntimeState);
-          const language = userState.settings?.general?.responseLanguage;
+          const language = userState.settings?.general?.responseLanguage?.trim() || 'en-US';
 
           const runtimes = await this.getRuntime(job.userId, keyVaults);
 
@@ -2111,7 +2111,10 @@ export class MemoryExtractionExecutor {
             this.getAiProviderRuntimeState(params.userId),
           ]);
           const keyVaults = await this.resolveRuntimeKeyVaults(aiProviderRuntimeState);
-          const language = params.language || userState.settings?.general?.responseLanguage;
+          const language =
+            params.language?.trim() ||
+            userState.settings?.general?.responseLanguage?.trim() ||
+            'en-US';
 
           const runtimes = await this.getRuntime(params.userId, keyVaults);
           const contextProvider =
