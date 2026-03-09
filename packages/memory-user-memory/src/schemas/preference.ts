@@ -27,9 +27,9 @@ export const AppContextSchema = z.object({
  * Preference-specific fields
  */
 export const WithPreferenceSchema = z.object({
-  appContext: AppContextSchema.nullable().describe(
-    'Application/surface specific preference, if any',
-  ),
+  appContext: z
+    .union([AppContextSchema.nullable(), z.string().transform(() => null)])
+    .describe('Application/surface specific preference, if any'),
   conclusionDirectives: z
     .string()
     .describe(
@@ -41,9 +41,9 @@ export const WithPreferenceSchema = z.object({
   extractedScopes: z
     .array(z.string())
     .describe('Array of JSON strings describing preference facets and applicable scopes'),
-  originContext: OriginContextSchema.nullable().describe(
-    'Context of how/why this preference was expressed',
-  ),
+  originContext: z
+    .union([OriginContextSchema.nullable(), z.string().transform(() => null)])
+    .describe('Context of how/why this preference was expressed'),
   scorePriority: z
     .number()
     .min(0)
