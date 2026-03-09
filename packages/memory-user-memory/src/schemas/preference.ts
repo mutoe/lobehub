@@ -27,9 +27,11 @@ export const AppContextSchema = z.object({
  * Preference-specific fields
  */
 export const WithPreferenceSchema = z.object({
-  appContext: AppContextSchema.nullable().describe(
-    'Application/surface specific preference, if any',
-  ),
+  // Fork: some models return a plain string here; coerce it to null. Uses preprocess
+  // (not a union with .transform) so the schema still converts to JSON Schema.
+  appContext: z
+    .preprocess((val) => (typeof val === 'string' ? null : val), AppContextSchema.nullable())
+    .describe('Application/surface specific preference, if any'),
   conclusionDirectives: z
     .string()
     .describe(
@@ -41,9 +43,11 @@ export const WithPreferenceSchema = z.object({
   extractedScopes: z
     .array(z.string())
     .describe('Array of JSON strings describing preference facets and applicable scopes'),
-  originContext: OriginContextSchema.nullable().describe(
-    'Context of how/why this preference was expressed',
-  ),
+  // Fork: some models return a plain string here; coerce it to null. Uses preprocess
+  // (not a union with .transform) so the schema still converts to JSON Schema.
+  originContext: z
+    .preprocess((val) => (typeof val === 'string' ? null : val), OriginContextSchema.nullable())
+    .describe('Context of how/why this preference was expressed'),
   scorePriority: z
     .number()
     .min(0)

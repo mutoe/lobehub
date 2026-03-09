@@ -1,4 +1,5 @@
 import { renderPlaceholderTemplate } from '@lobechat/context-engine';
+import { z } from 'zod';
 
 import { experiencePrompt } from '../prompts';
 import type { ExperienceMemory } from '../schemas';
@@ -6,6 +7,12 @@ import { ExperienceMemorySchema } from '../schemas';
 import type { ExtractorTemplateProps } from '../types';
 import { buildGenerateObjectSchema } from '../utils/zod';
 import { BaseMemoryExtractor } from './base';
+
+/** Schema that defaults undefined/null model output to empty memories (e.g. Gemini sometimes returns undefined) */
+const ExperienceResultSchema = z.preprocess(
+  (val) => (val == null ? { memories: [] } : val),
+  ExperienceMemorySchema,
+);
 
 export class ExperienceExtractor extends BaseMemoryExtractor<ExperienceMemory> {
   getPrompt(): string {
@@ -17,11 +24,11 @@ export class ExperienceExtractor extends BaseMemoryExtractor<ExperienceMemory> {
   }
 
   getSchema() {
-    return buildGenerateObjectSchema(ExperienceMemorySchema, { name: 'experience_extraction' });
+    return buildGenerateObjectSchema(ExperienceResultSchema, { name: 'experience_extraction' });
   }
 
   getResultSchema() {
-    return ExperienceMemorySchema;
+    return ExperienceResultSchema;
   }
 
   getTemplateProps(options: ExtractorTemplateProps) {
