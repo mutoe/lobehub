@@ -103,6 +103,7 @@ export const getServerGlobalConfig = async () => {
     },
     disableEmailPassword: authEnv.AUTH_DISABLE_EMAIL_PASSWORD,
     enableBusinessFeatures: ENABLE_BUSINESS_FEATURES,
+    enableDataExport: process.env.ENABLE_DATA_EXPORT === '1',
     enableEmailVerification: authEnv.AUTH_EMAIL_VERIFICATION,
     enableComposio: !!composioEnv.COMPOSIO_API_KEY,
     enableGatewayMode:
