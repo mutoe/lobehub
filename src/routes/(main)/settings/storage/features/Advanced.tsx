@@ -27,6 +27,7 @@ const AdvancedActions = () => {
   const enableBusinessFeatures = useServerConfigStore(serverConfigSelectors.enableBusinessFeatures);
   const checked = useUserStore(userGeneralSettingsSelectors.telemetry);
   const transferAgentsFormItems = useTransferAgentsFormItem();
+  const enableDataExport = useServerConfigStore(serverConfigSelectors.enableDataExport);
   const resetSettings = useUserStore((s) => s.resetSettings);
   const updateGeneralConfig = useUserStore((s) => s.updateGeneralConfig);
 
@@ -84,7 +85,7 @@ const AdvancedActions = () => {
         layout: 'horizontal',
         minWidth: undefined,
       },
-      ...(enableBusinessFeatures ? [renderExportButtonFormItem()] : []),
+      ...(enableBusinessFeatures || enableDataExport ? [renderExportButtonFormItem()] : []),
       {
         children: (
           <Button danger type={'primary'} onClick={handleReset}>
