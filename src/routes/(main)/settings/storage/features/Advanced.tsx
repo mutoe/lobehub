@@ -28,6 +28,7 @@ const AdvancedActions = () => {
   const { hideDocs } = useServerConfigStore(featureFlagsSelectors);
   const enableBusinessFeatures = useServerConfigStore(serverConfigSelectors.enableBusinessFeatures);
   const checked = useUserStore(userGeneralSettingsSelectors.telemetry);
+  const enableDataExport = useServerConfigStore(serverConfigSelectors.enableDataExport);
   const [clearSessions, clearSessionGroups] = useSessionStore((s) => [
     s.clearSessions,
     s.clearSessionGroups,
@@ -112,7 +113,7 @@ const AdvancedActions = () => {
         layout: 'horizontal',
         minWidth: undefined,
       },
-      ...(enableBusinessFeatures ? [renderExportButtonFormItem()] : []),
+      ...(enableBusinessFeatures || enableDataExport ? [renderExportButtonFormItem()] : []),
       {
         children: (
           <Button danger type={'primary'} onClick={handleClear}>
