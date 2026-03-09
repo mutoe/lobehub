@@ -396,14 +396,14 @@ describe('UserMemoryIdentityModel', () => {
       ]);
     });
 
-    it('should return paginated list with default parameters (self relationship only)', async () => {
+    it('should return paginated list with default parameters (all relationships)', async () => {
       const result = await identityModel.queryList();
 
-      // Default filters to self relationship
-      expect(result.items).toHaveLength(2);
+      // No relationship filter by default: returns all identities for the user
+      expect(result.items).toHaveLength(3);
       expect(result.page).toBe(1);
       expect(result.pageSize).toBe(20);
-      expect(result.total).toBe(2);
+      expect(result.total).toBe(3);
     });
 
     it('should return all relationships when specified', async () => {
@@ -451,7 +451,7 @@ describe('UserMemoryIdentityModel', () => {
       expect(result.pageSize).toBe(100);
     });
 
-    it('hydrates external candidates through the default self relationship filter', async () => {
+    it('hydrates external candidates without a default relationship filter', async () => {
       const ftsSearchCandidates = vi.fn().mockResolvedValue({
         candidates: [
           { id: 'other-list-id', score: 12 },
@@ -468,11 +468,12 @@ describe('UserMemoryIdentityModel', () => {
 
       const result = await model.queryList({ q: 'candidate' });
 
-      expect(result.items.map(({ id }) => id)).toEqual(['list-id-2']);
-      expect(result.total).toBe(1);
+      // Fork: no default self filter, so the Friend identity (list-id-3) is kept too
+      expect(result.items.map(({ id }) => id)).toEqual(['list-id-3', 'list-id-2']);
+      expect(result.total).toBe(2);
       expect(ftsSearchCandidates).toHaveBeenCalledWith({
         entity: 'memoryIdentities',
-        filters: { memoryRelationships: [RelationshipEnum.Self] },
+        filters: {},
         pagination: {},
         query: {
           fields: ['parent_title', 'description', 'role'],
@@ -540,8 +541,9 @@ describe('UserMemoryIdentityModel', () => {
     it('should sort by capturedAt desc by default', async () => {
       const result = await identityModel.queryList({ order: 'desc' });
 
-      expect(result.items[0].id).toBe('list-id-2');
-      expect(result.items[1].id).toBe('list-id-1');
+      expect(result.items[0].id).toBe('list-id-3');
+      expect(result.items[1].id).toBe('list-id-2');
+      expect(result.items[2].id).toBe('list-id-1');
     });
 
     it('should sort by capturedAt asc', async () => {
@@ -549,14 +551,16 @@ describe('UserMemoryIdentityModel', () => {
 
       expect(result.items[0].id).toBe('list-id-1');
       expect(result.items[1].id).toBe('list-id-2');
+      expect(result.items[2].id).toBe('list-id-3');
     });
 
     it('should sort by type', async () => {
       const result = await identityModel.queryList({ sort: 'type', order: 'asc' });
 
-      // 'personal' comes before 'professional' alphabetically
+      // 'personal' comes before 'professional' alphabetically; two personal (list-id-1, list-id-3), one professional (list-id-2)
       expect(result.items[0].type).toBe('personal');
-      expect(result.items[1].type).toBe('professional');
+      expect(result.items[1].type).toBe('personal');
+      expect(result.items[2].type).toBe('professional');
     });
 
     it('should not return other users identities', async () => {
@@ -587,7 +591,7 @@ describe('UserMemoryIdentityModel', () => {
     it('should handle empty query string', async () => {
       const result = await identityModel.queryList({ q: '   ' });
 
-      expect(result.items).toHaveLength(2); // Default self relationship filter
+      expect(result.items).toHaveLength(3); // No relationship filter: all identities
     });
   });
 
