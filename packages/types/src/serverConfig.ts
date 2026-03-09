@@ -57,6 +57,8 @@ export interface GlobalServerConfig {
   defaultAgent?: PartialDeep<UserDefaultAgent>;
   disableEmailPassword?: boolean;
   enableBusinessFeatures?: boolean;
+  /** When true, show data export in Settings > Storage (can be enabled via ENABLE_DATA_EXPORT=1) */
+  enableDataExport?: boolean;
   /**
    * @deprecated
    */
