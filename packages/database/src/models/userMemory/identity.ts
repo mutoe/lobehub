@@ -8,6 +8,11 @@ import { userMemories, userMemoriesIdentities } from '../../schemas';
 import type { LobeChatDatabase } from '../../type';
 import { sanitizeBm25Query } from '../../utils/bm25';
 
+// Fallback title when user_memories row is missing (LEFT JOIN)
+const identityListTitle = sql<
+  string | null
+>`COALESCE(${userMemories.title}, ${userMemoriesIdentities.description}, ${userMemoriesIdentities.role})`;
+
 export class UserMemoryIdentityModel {
   private userId: string;
   private db: LobeChatDatabase;
@@ -85,10 +90,10 @@ export class UserMemoryIdentityModel {
         ? sql`(${userMemories.title} @@@ ${bm25Query} OR ${userMemoriesIdentities.description} @@@ ${bm25Query} OR ${userMemoriesIdentities.role} @@@ ${bm25Query})`
         : undefined,
       types && types.length > 0 ? inArray(userMemoriesIdentities.type, types) : undefined,
-      // Default to 'self' relationship if not specified
+      // Only filter by relationship when explicitly requested
       relationships && relationships.length > 0
         ? inArray(userMemoriesIdentities.relationship, relationships)
-        : eq(userMemoriesIdentities.relationship, RelationshipEnum.Self),
+        : undefined,
       tags && tags.length > 0
         ? or(...tags.map((tag) => sql<boolean>`${tag} = ANY(${userMemoriesIdentities.tags})`))
         : undefined,
@@ -108,7 +113,7 @@ export class UserMemoryIdentityModel {
       applyOrder(userMemoriesIdentities.createdAt),
     ];
 
-    // JOIN condition
+    // LEFT JOIN so identities without a linked user_memories row still appear (e.g. missing link)
     const joinCondition = and(
       eq(userMemories.id, userMemoriesIdentities.userMemoryId),
       eq(userMemories.userId, this.userId),
@@ -126,12 +131,12 @@ export class UserMemoryIdentityModel {
           relationship: userMemoriesIdentities.relationship,
           role: userMemoriesIdentities.role,
           tags: userMemoriesIdentities.tags,
-          title: userMemories.title,
+          title: identityListTitle,
           type: userMemoriesIdentities.type,
           updatedAt: userMemoriesIdentities.updatedAt,
         })
         .from(userMemoriesIdentities)
-        .innerJoin(userMemories, joinCondition)
+        .leftJoin(userMemories, joinCondition)
         .where(whereClause)
         .orderBy(...orderByClauses)
         .limit(normalizedPageSize)
@@ -139,7 +144,7 @@ export class UserMemoryIdentityModel {
       this.db
         .select({ count: sql<number>`COUNT(*)::int` })
         .from(userMemoriesIdentities)
-        .innerJoin(userMemories, joinCondition)
+        .leftJoin(userMemories, joinCondition)
         .where(whereClause),
     ]);
 
