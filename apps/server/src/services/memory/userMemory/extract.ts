@@ -1608,7 +1608,7 @@ export class MemoryExtractionExecutor {
             aiProviderRuntimeState,
             memoryServiceConfig,
           );
-          const language = userState.settings?.general?.responseLanguage;
+          const language = userState.settings?.general?.responseLanguage?.trim() || 'en-US';
 
           const runtimes = await this.getRuntime(job.userId, memoryServiceConfig, keyVaults);
 
@@ -2596,7 +2596,10 @@ export class MemoryExtractionExecutor {
             aiProviderRuntimeState,
             memoryServiceConfig,
           );
-          const language = params.language || userState.settings?.general?.responseLanguage;
+          const language =
+            params.language?.trim() ||
+            userState.settings?.general?.responseLanguage?.trim() ||
+            'en-US';
 
           const runtimes = await this.getRuntime(params.userId, memoryServiceConfig, keyVaults);
           const contextProvider =
