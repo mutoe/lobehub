@@ -20,6 +20,7 @@ import type {
   MemoryExtractionAgent,
   TemplateProps,
 } from '../types';
+import { localeToOutputLanguage } from '../utils/localeToOutputLanguage';
 import { buildGenerateObjectSchema } from '../utils/zod';
 
 const serializeForSpan = (value: unknown, limit = 4000) => {
@@ -75,7 +76,7 @@ export abstract class BaseMemoryExtractor<
 
   protected getTemplateProps(options: TExtractorTemplateProps): TemplateProps {
     return {
-      language: options.language || 'English',
+      language: localeToOutputLanguage(options.language) || 'English',
       topK: options.topK ?? 10,
       username: options.username || 'User',
     } satisfies TemplateProps;
