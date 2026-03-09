@@ -31,6 +31,7 @@ import type {
   MemoryExtractionLLMConfig,
   MemoryExtractionResult,
 } from '../types';
+import { localeToOutputLanguage } from '../utils/localeToOutputLanguage';
 
 const LAYER_ORDER: LayersEnum[] = [
   'activity' as LayersEnum,
@@ -283,37 +284,41 @@ export class MemoryExtractionService<RO> {
   }
 
   private async runContextLayer(job: MemoryExtractionJob, options: ExtractorOptions) {
+    const language = localeToOutputLanguage(options.language ?? 'en-US');
     return this.runLayerExtractor(job, LayersEnum.Context, () =>
       this.contextExtractor.structuredCall({
         ...options,
-        language: options.language ?? 'English',
+        language,
       }),
     );
   }
 
   private async runActivityLayer(job: MemoryExtractionJob, options: ExtractorOptions) {
+    const language = localeToOutputLanguage(options.language ?? 'en-US');
     return this.runLayerExtractor(job, LayersEnum.Activity, () =>
       this.activityExtractor.structuredCall({
         ...options,
-        language: options.language ?? 'English',
+        language,
       }),
     );
   }
 
   private async runExperienceLayer(job: MemoryExtractionJob, options: ExtractorOptions) {
+    const language = localeToOutputLanguage(options.language ?? 'en-US');
     return this.runLayerExtractor(job, LayersEnum.Experience, () =>
       this.experienceExtractor.structuredCall({
         ...options,
-        language: options.language ?? 'English',
+        language,
       }),
     );
   }
 
   private async runPreferenceLayer(job: MemoryExtractionJob, options: ExtractorOptions) {
+    const language = localeToOutputLanguage(options.language ?? 'en-US');
     return this.runLayerExtractor(job, LayersEnum.Preference, () =>
       this.preferenceExtractor.structuredCall({
         ...options,
-        language: options.language ?? 'English',
+        language,
       }),
     );
   }
@@ -324,10 +329,11 @@ export class MemoryExtractionService<RO> {
       existingIdentitiesContext?: string;
     },
   ) {
+    const language = localeToOutputLanguage(options.language ?? 'en-US');
     return this.runLayerExtractor(job, LayersEnum.Identity, () =>
       this.identityExtractor.structuredCall({
         ...options,
-        language: options.language ?? 'English',
+        language,
       }),
     );
   }
