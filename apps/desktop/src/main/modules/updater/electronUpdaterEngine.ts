@@ -26,7 +26,7 @@ export const electronUpdaterEngine: UpdateEngine = {
       autoUpdater.setFeedURL(
         baseUrl
           ? { provider: 'generic', url: `${baseUrl}/${channel}` }
-          : { owner: 'lobehub', provider: 'github', repo: 'lobehub' },
+          : { owner: 'mutoe', provider: 'github', repo: 'lobehub' },
       );
     }
     // The channel setter mutates this flag. Windows/Linux retain rollback support.
