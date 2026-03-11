@@ -141,8 +141,10 @@ class ChatService {
     const searchConfig = getSearchConfig(payload.model, payload.provider!, targetAgentId);
 
     // =================== 1.1 process user memories =================== //
-
-    const enableUserMemories = settingsSelectors.memoryEnabled(getUserStoreState());
+    // Only enable memory when both user global setting and agent-level memory are enabled
+    const userMemoryEnabled = settingsSelectors.memoryEnabled(getUserStoreState());
+    const agentMemoryEnabled = chatConfig.memory?.enabled !== false;
+    const enableUserMemories = userMemoryEnabled && agentMemoryEnabled;
     const userMemorySettings = settingsSelectors.currentMemorySettings(getUserStoreState());
     const effectiveMemoryEffort =
       chatConfig.memory?.effort ?? userMemorySettings.effort ?? 'medium';
