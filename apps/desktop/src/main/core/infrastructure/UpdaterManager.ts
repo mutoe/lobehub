@@ -436,7 +436,7 @@ export class UpdaterManager {
       );
 
       autoUpdater.setFeedURL({
-        owner: 'lobehub',
+        owner: 'mutoe',
         provider: 'github',
         repo: 'lobehub',
       });
