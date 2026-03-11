@@ -61,7 +61,7 @@ const getPublishConfig = () => {
   console.info(`📦 ${channelPath} channel: No UPDATE_SERVER_URL, falling back to GitHub provider`);
   return [
     {
-      owner: 'lobehub',
+      owner: 'mutoe',
       provider: 'github',
       repo: 'lobehub',
     },
