@@ -1,9 +1,12 @@
 name: Publish Docker Image
 permissions:
   contents: read
+  packages: write
 
 on:
   workflow_dispatch: {}
+  push:
+    tags: ["v*"]
   release:
     types: [published]
 
@@ -12,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  REGISTRY_IMAGE: lobehub/lobehub
+  REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
   build:
@@ -21,8 +24,6 @@ jobs:
         include:
           - platform: linux/amd64
             os: ubuntu-latest
-          - platform: linux/arm64
-            os: ubuntu-24.04-arm
     runs-on: ${{ matrix.os }}
     name: Build ${{ matrix.platform }} Image
     steps:
@@ -44,15 +45,15 @@ jobs:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
-            type=raw,value=canary,enable=${{ contains(github.event.release.tag_name, '-canary.') }}
-            type=raw,value=${{ github.event.release.tag_name }},enable=${{ github.event.release.prerelease }}
+            type=raw,value=latest,enable=${{ (github.event_name == 'release' && !github.event.release.prerelease) || (github.event_name == 'push') }}
+            type=raw,value=${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }},enable=${{ (github.event_name == 'release' && github.event.release.prerelease) || (github.event_name == 'push' && contains(github.ref_name, '-')) }}
 
       - name: Docker login
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get commit SHA
         if: github.ref == 'refs/heads/main'
@@ -111,18 +112,20 @@ jobs:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
-            type=raw,value=canary,enable=${{ contains(github.event.release.tag_name, '-canary.') }}
-            type=raw,value=${{ github.event.release.tag_name }},enable=${{ github.event.release.prerelease }}
+            type=raw,value=latest,enable=${{ (github.event_name == 'release' && !github.event.release.prerelease) || (github.event_name == 'push') }}
+            type=raw,value=${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }},enable=${{ (github.event_name == 'release' && github.event.release.prerelease) || (github.event_name == 'push' && contains(github.ref_name, '-')) }}
 
       - name: Docker login
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_REGISTRY_USER }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
+        env:
+          DOCKER_METADATA_OUTPUT_JSON: ${{ steps.meta.outputs.json }}
         run: |
           # 过滤掉带 v 前缀的 tag（如 lobehub/lobehub:v2.1.29），只保留无 v 前缀的版本号和 latest
           TAGS=$(jq -cr '.tags | map(select(test(":v\\d") | not)) | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON")
