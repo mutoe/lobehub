@@ -1,0 +1,171 @@
+# 推送 tag（如 v2.1.39-1）或发布 Release 时触发；仅推送 tag 时也会自动创建 Release 并上传产物
+name: Release Desktop
+
+on:
+  push:
+    tags: ['v*']
+  release:
+    types: [published]
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24.11.1'
+  BUN_VERSION: '1.2.23'
+
+jobs:
+  version:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.out.outputs.version }}
+      tag_name: ${{ steps.out.outputs.tag_name }}
+    steps:
+      - name: Version from tag
+        id: out
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            tag="${{ github.event.release.tag_name }}"
+          else
+            tag="${{ github.ref_name }}"
+          fi
+          version="${tag#v}"
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "tag_name=${tag}" >> $GITHUB_OUTPUT
+          echo "📦 Version: ${version} (tag: ${tag})"
+
+  configure-build:
+    needs: [version]
+    name: Configure Build Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - name: Generate matrix
+        id: set
+        run: |
+          matrix='{"include":[{"os":"windows-2025","name":"windows-2025"},{"os":"macos-15","name":"macos-arm64"}]}'
+          echo "matrix=${matrix}" >> $GITHUB_OUTPUT
+
+  build:
+    needs: [version, configure-build]
+    name: Build Desktop (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.configure-build.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup build environment
+        uses: ./.github/actions/desktop-build-setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set package version
+        run: npm run workflow:set-desktop-version ${{ needs.version.outputs.version }} stable
+
+      - name: Clean (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          sudo rm -rf apps/desktop/release || true
+          sudo rm -rf apps/desktop/dist || true
+          sudo rm -rf /tmp/electron-builder* || true
+
+      - name: Build
+        run: npm run desktop:package:app
+        env:
+          UPDATE_CHANNEL: stable
+          RELEASE_NOTES: ${{ github.event_name == 'release' && github.event.release.body || '' }}
+          APP_URL: http://localhost:3015
+          DATABASE_URL: 'postgresql://postgres@localhost:5432/postgres'
+          KEY_VAULTS_SECRET: 'oLXWIiR/AKF+rWaqy9lHkrYgzpATbW3CtJp3UfkVgpE='
+          TEMP: C:\temp
+          TMP: C:\temp
+
+      - name: Upload artifact
+        uses: ./.github/actions/desktop-upload-artifacts
+        with:
+          artifact-name: release-${{ matrix.name }}
+          retention-days: 1
+
+  merge-mac:
+    needs: [build, version]
+    name: Merge macOS Release Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node & Bun
+        uses: ./.github/actions/setup-node-bun
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          bun-version: ${{ env.BUN_VERSION }}
+          package-manager-cache: 'false'
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: release
+          pattern: release-*
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -R release
+
+      - name: Install yaml
+        run: |
+          cd scripts/electronWorkflow
+          if [ ! -f package.json ]; then echo '{"name":"merge-mac-release","private":true}' > package.json; fi
+          bun add --no-save yaml@2.8.1
+
+      - name: Merge mac YAML files
+        run: bun run scripts/electronWorkflow/mergeMacReleaseFiles.js
+
+      - name: Upload merged artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: merged-release
+          path: release/
+          retention-days: 1
+
+  publish-release:
+    needs: [merge-mac, version]
+    name: Upload to GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download merged artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: merged-release
+          path: release
+
+      - name: List files
+        run: ls -R release
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version.outputs.tag_name }}
+          body: ${{ github.event_name == 'release' && github.event.release.body || format('Release **{0}**', needs.version.outputs.version) }}
+          prerelease: false
+          files: |
+            release/stable*
+            release/latest*
+            release/*.dmg*
+            release/*.zip*
+            release/*.exe*
+            release/*.AppImage
+            release/*.deb*
+            release/*.snap*
+            release/*.rpm*
+            release/*.tar.gz*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
