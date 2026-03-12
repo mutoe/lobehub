@@ -5,18 +5,13 @@ import { Flexbox } from '@lobehub/ui';
 import { Button, Select } from '@lobehub/ui/base-ui';
 import { App } from 'antd';
 import { createStaticStyles } from 'antd-style';
-import { customAlphabet } from 'nanoid/non-secure';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useActiveWorkspaceId } from '@/business/client/hooks/useActiveWorkspaceId';
 import { useWorkspaceAwareNavigate } from '@/features/Workspace/useWorkspaceAwareNavigate';
 import { usePermission } from '@/hooks/usePermission';
-import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
-import { lambdaClient } from '@/libs/trpc/client';
 import { agentService } from '@/services/agent';
-import { discoverService } from '@/services/discover';
-import { marketApiService } from '@/services/marketApi';
 import { useAgentStore } from '@/store/agent';
 import { useHomeStore } from '@/store/home';
 
@@ -65,15 +60,6 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   `,
 }));
 
-/**
- * Generate a market identifier (8-character lowercase alphanumeric string)
- */
-const generateMarketIdentifier = () => {
-  const alphabet = '0123456789abcdefghijklmnopqrstuvwxyz';
-  const generate = customAlphabet(alphabet, 8);
-  return generate();
-};
-
 type ForkTarget = 'private' | 'public';
 
 const ForkAndChat = memo<{ mobile?: boolean }>(({ mobile }) => {
@@ -85,7 +71,6 @@ const ForkAndChat = memo<{ mobile?: boolean }>(({ mobile }) => {
   const { message } = App.useApp();
   const navigate = useWorkspaceAwareNavigate();
   const { t } = useTranslation('discover');
-  const { isAuthenticated, signIn } = useMarketAuth();
   const { allowed: canCreate } = usePermission('create_content');
   const activeWorkspaceId = useActiveWorkspaceId();
   const [visibility, setVisibility] = useState<ForkTarget>('private');
@@ -105,86 +90,37 @@ const ForkAndChat = memo<{ mobile?: boolean }>(({ mobile }) => {
   // had a chance to vet them.
   const handleForkAndChat = async (target: ForkTarget = 'private') => {
     if (!canCreate || isLoading) return;
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      try {
-        await signIn();
-      } catch {
-        return;
-      }
-    }
 
     try {
       setIsLoading(true);
 
-      // Step 1: Check if user has already forked this agent
+      // Check if user has already forked this agent locally
       const existingAgentId = await agentService.getAgentByForkedFromIdentifier(identifier!);
 
       if (existingAgentId) {
-        // User has already forked this agent, navigate to existing fork
         message.info(t('fork.alreadyForked'));
         navigate(AGENT_CHAT_URL(existingAgentId, mobile));
         return;
       }
 
-      // Generate a unique identifier for the forked agent
-      const newIdentifier = generateMarketIdentifier();
-
-      // Workspace mode forks must be attributed to the workspace's Market
-      // organization mirror — the per-user trust token always carries the
-      // workspaceId, so Market rejects the request without
-      // `x-lobe-owner-account-id` (403). Whether the local agent ends up
-      // private or public is independent of this market-side ownership.
-      //
-      // Freshly created workspaces get the Market org provisioned upfront in
-      // `workspace.create` / the Stripe webhook. `autoProvision: true` is a
-      // best-effort backfill for historical workspaces that predate that
-      // change; if the caller isn't the owner it silently falls through and
-      // the fork surfaces the failure as the usual `fork.failed` toast.
-      let actAs: number | undefined;
-      if (activeWorkspaceId) {
-        const { marketAccountId } = await lambdaClient.workspace.ensureMarketOrganization.mutate({
-          autoProvision: true,
-        });
-        actAs = marketAccountId;
-      }
-
-      // Step 2: Fork the agent via Market API (single-item batch)
-      const [forkOutcome] = await marketApiService.forkAgent([
-        {
-          actAs,
-          identifier: newIdentifier,
-          name: title,
-          sourceIdentifier: identifier!,
-          status: 'published',
-          visibility: 'public',
-        },
-      ]);
-
-      if (!forkOutcome.success) {
-        throw new Error(forkOutcome.error?.message || 'Forking failed');
-      }
-
-      const forkResult = forkOutcome.data;
-
-      // Step 3: Create agent config with forked data
       if (!config) throw new Error('Agent config is missing');
 
+      // Local fork: create agent from current context, no Market auth or API
       const agentData = {
         config: {
           ...config,
           editorData,
           ...meta,
-          marketIdentifier: forkResult.agent.identifier,
+          marketIdentifier: identifier,
           params: {
             ...config.params,
-            forkedFromIdentifier: identifier, // Store the source agent identifier
+            forkedFromIdentifier: identifier,
           },
-          title: forkResult.agent.name,
+          title,
         },
       };
 
-      // Step 4: Add to local agent list. `target` decides where it lands —
+      // Add to local agent list. `target` decides where it lands —
       // Private bucket (only the creator sees it) or workspace-shared
       // (visible to every member). In personal mode `visibility` is left
       // unset and the column defaults to `public` (no-op).
@@ -193,13 +129,6 @@ const ForkAndChat = memo<{ mobile?: boolean }>(({ mobile }) => {
         ...(activeWorkspaceId ? { visibility: target } : {}),
       });
       await refreshAgentList();
-
-      // Step 5: Report fork event (using 'add' event type)
-      discoverService.reportAgentEvent({
-        event: 'add',
-        identifier: forkResult.agent.identifier,
-        source: location.pathname,
-      });
 
       message.success(t('fork.success'));
 
