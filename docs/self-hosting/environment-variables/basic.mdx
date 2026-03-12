@@ -244,3 +244,31 @@ The above example sets the `SERPAPI_API_KEY` of the `search-engine` plugin to `x
 - Type: Optional
 - Description: Index address of the LobeHub assistant market. If you have deployed the assistant market service on your own, you can use this variable to override the default market address.
 - Default: `https://chat-agents.lobehub.com`
+
+### Using "Fork & Chat" and Market Login on Self-Hosted Instances
+
+When users click **Fork & Chat** in the assistant market on a self-hosted instance, they need **market identity** first. Without the configuration below:
+
+- **What you see**: After clicking, they are asked to "create profile" or sign in; the browser goes to the **official LobeHub** consent page (e.g. "lobechat-com requests to use your account to sign in"), and after authorizing, the page gets stuck or never returns to your self-hosted site.
+- **Why**: The default flow uses the official LobeHub Market OAuth, which only allows fixed redirect URIs (e.g. lobechat.com, app.lobehub.com). Your self-hosted domain is not in that list, so the callback fails and users appear stuck.
+
+**Recommended**: Configure **Market Trusted Client** so users sign in with **your site's own auth** (Better Auth) and can use Fork & Chat without being sent to the official LobeHub consent page:
+
+1. Set both environment variables below (you need Trusted Client credentials for your self-hosted instance from LobeHub).
+2. Once configured, users who are logged in to your site will no longer see the official consent popup; they may only need to complete "profile setup" once (e.g. display name) in your app.
+
+**Default behavior**: "Fork & Chat" only copies the assistant locally and opens the chat; no market login is required. To sync with the official market, configure Trusted Client.
+
+### `MARKET_TRUSTED_CLIENT_ID`
+
+- Type: Optional
+- Description: Market Trusted Client ID for self-hosted instances (market login and "Fork & Chat"). Must be registered in the Market's Trusted Client allowlist. When set together with `MARKET_TRUSTED_CLIENT_SECRET`, users use your site's login instead of being redirected to the official LobeHub consent page.
+- Default: -
+- Example: Client ID provided by LobeHub for your self-hosted instance
+
+### `MARKET_TRUSTED_CLIENT_SECRET`
+
+- Type: Optional
+- Description: Market Trusted Client secret (64-character hex, 32 bytes), shared with the Market server for signing user payloads. You can generate one with `openssl rand -hex 32`. Must be set together with `MARKET_TRUSTED_CLIENT_ID`.
+- Default: -
+- Example: Secret provided by LobeHub for your self-hosted instance, or a self-generated 64-character hex string
