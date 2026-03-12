@@ -295,3 +295,31 @@ MULTIMODAL_UNDERSTANDING_MODEL=gemini-2.5-flash
 - 类型：可选
 - 描述：LobeHub 助手市场的索引地址，如果你自行部署了助手市场的服务，可以使用该变量来覆盖默认的市场地址
 - 默认值：`https://registry.npmmirror.com/@lobehub/agents-index/v1/files/public`
+
+### 自部署下使用「派生并聊天」与助理市场登录
+
+在自部署实例中点击助理市场的「派生并聊天」时，需要先完成**助理市场身份**验证。未做如下配置时会出现：
+
+- **现象**：点击后要求「创建档案」，登录时跳转到**官方 LobeHub** 的授权页（页面显示「lobechat-com 申请使用我的账户进行登录」），且授权后一直卡住或无法回到你的自部署站点。
+- **原因**：默认使用官方 LobeHub Market 的 OAuth，且官方只允许固定站点（如 lobechat.com、app.lobehub.com）作为回调地址；你的自部署域名不在白名单内，授权后无法正确回调，因此会卡在授权页或回调失败。
+
+**推荐做法**：为自部署实例配置 **Market Trusted Client**，让用户用**你站点自己的登录**（Better Auth）即可使用派生并聊天，不再跳转官方 LobeHub：
+
+1. 配置下面两个环境变量（需向 LobeHub 申请自部署实例的 Trusted Client 凭证）：
+2. 用户在你站点登录后，点击「派生并聊天」时不再弹出官方授权页，仅首次可能需要在站内「创建档案」完善昵称等。
+
+**默认行为**：「派生并聊天」仅在本地复制助理并进入聊天，不需要市场登录；若需同步到官方市场，请配置 Trusted Client。
+
+### `MARKET_TRUSTED_CLIENT_ID`
+
+- 类型：可选
+- 描述：助理市场 Trusted Client  ID，用于自部署实例的助理市场登录与「派生并聊天」等能力。需在 Market 的 Trusted Client 白名单中注册你的实例。与 `MARKET_TRUSTED_CLIENT_SECRET` 同时配置后生效，用户将使用你站点的登录态，而不会跳转官方 LobeHub 授权页。
+- 默认值：-
+- 示例：由 LobeHub 提供的自部署专用 Client ID
+
+### `MARKET_TRUSTED_CLIENT_SECRET`
+
+- 类型：可选
+- 描述：助理市场 Trusted Client 密钥（64 字符 hex，32 字节），与 Market 服务端共享，用于对用户信息进行签名。自生成示例：`openssl rand -hex 32`。须与 `MARKET_TRUSTED_CLIENT_ID` 一起配置。
+- 默认值：-
+- 示例：由 LobeHub 提供的自部署专用 Secret，或自生成的 64 字符 hex 字符串
