@@ -6,7 +6,7 @@ permissions:
 on:
   workflow_dispatch: {}
   push:
-    tags: ["v*"]
+    tags: ['v*']
   release:
     types: [published]
 
@@ -34,6 +34,18 @@ jobs:
 
       - name: Checkout base
         uses: actions/checkout@v6
+
+      # Free GitHub runners have ~7GB RAM; Vite SPA build peaks above that during chunk rendering.
+      # Add swap so Node inside docker build can use the same heap limits as local (see NODE_OPTIONS in Dockerfile).
+      - name: Set up swap for Docker build
+        run: |
+          if [ -f /swapfile ]; then sudo swapoff /swapfile 2>/dev/null || true; sudo rm -f /swapfile; fi
+          sudo fallocate -l 8G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=8192
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          sudo swapon --show
+          free -h
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
