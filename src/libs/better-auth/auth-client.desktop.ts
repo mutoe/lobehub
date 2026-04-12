@@ -3,6 +3,7 @@ import {
   genericOAuthClient,
   inferAdditionalFields,
   magicLinkClient,
+  multiSessionClient,
 } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 
@@ -23,6 +24,7 @@ function getClient() {
         inferAdditionalFields<typeof auth>(),
         genericOAuthClient(),
         magicLinkClient(),
+        multiSessionClient(),
       ],
     });
   }
@@ -44,7 +46,9 @@ function lazyProp(key: string): any {
 }
 
 export const changeEmail = lazyProp('changeEmail');
+export const getSession = lazyProp('getSession');
 export const linkSocial = lazyProp('linkSocial');
+export const multiSession = lazyProp('multiSession');
 export const oauth2 = lazyProp('oauth2');
 export const accountInfo = lazyProp('accountInfo');
 export const listAccounts = lazyProp('listAccounts');
