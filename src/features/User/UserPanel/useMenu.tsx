@@ -2,7 +2,15 @@ import { LOBE_CHAT_CLOUD, UTM_SOURCE } from '@lobechat/business-const';
 import { DOWNLOAD_URL, isDesktop } from '@lobechat/const';
 import { Flexbox, Hotkey, Icon, Tag } from '@lobehub/ui';
 import { type ItemType } from 'antd/es/menu/interface';
-import { BrainCircuit, Cloudy, Download, HardDriveDownload, LogOut, Settings2 } from 'lucide-react';
+import {
+  BrainCircuit,
+  Cloudy,
+  Download,
+  HardDriveDownload,
+  LogOut,
+  Settings2,
+  UserCog,
+} from 'lucide-react';
 import { type PropsWithChildren } from 'react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -150,6 +158,11 @@ export const useMenu = () => {
 
   const logoutItems: MenuProps['items'] = isLoginWithAuth
     ? [
+        {
+          icon: <Icon icon={UserCog} />,
+          key: 'switchAccount',
+          label: <span>{t('switchAccount', { ns: 'auth' })}</span>,
+        },
         {
           icon: <Icon icon={LogOut} />,
           key: 'logout',

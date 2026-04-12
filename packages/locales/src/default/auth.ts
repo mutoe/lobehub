@@ -216,6 +216,7 @@ export default {
   'signin.subtitle': 'Sign up or log in to your {{appName}} account',
   'signin.title': 'Agent teammates that grow with you',
   'signout': 'Log Out',
+  'switchAccount': 'Switch Account',
   'signup': 'Sign Up',
   'stats.aiheatmaps': 'Activity Index',
   'stats.assistants': 'Agents',
