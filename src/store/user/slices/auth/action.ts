@@ -1,8 +1,10 @@
 import { type SSOProvider } from '@lobechat/types';
 
 import { type StoreSetter } from '@/store/types';
+import { saveRecentAccount } from '@/utils/recentAccounts';
 
 import { type UserStore } from '../../store';
+import { userProfileSelectors } from './selectors';
 
 interface AuthProvidersData {
   hasPasswordAccount: boolean;
@@ -60,6 +62,16 @@ export class UserAuthActionImpl {
   };
 
   logout = async (): Promise<void> => {
+    const state = this.#get();
+    const email = userProfileSelectors.email(state);
+    if (email) {
+      saveRecentAccount({
+        avatar: userProfileSelectors.userAvatar(state),
+        displayName: userProfileSelectors.nickName(state) || undefined,
+        email,
+      });
+    }
+
     const { signOut } = await import('@/libs/better-auth/auth-client');
     await signOut({
       fetchOptions: {
