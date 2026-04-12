@@ -4,7 +4,7 @@ import { type FC } from 'react';
 import { Link } from 'react-router-dom';
 
 import BusinessPanelContent from '@/business/client/features/User/BusinessPanelContent';
-import Menu from '@/components/Menu';
+import Menu, { type MenuProps } from '@/components/Menu';
 import { isDesktop } from '@/const/version';
 import UserInfo from '@/features/User/UserInfo';
 import { navigateToDesktopOnboarding } from '@/routes/(desktop)/desktop-onboarding/navigation';
@@ -47,6 +47,21 @@ const PanelContent: FC<{ closePopover: () => void }> = ({ closePopover }) => {
     closePopover();
   };
 
+  const handleLogoutMenuClick: MenuProps['onClick'] = (info) => {
+    if (info.key === 'logout') {
+      handleSignOut();
+      return;
+    }
+    if (info.key === 'switchAccount') {
+      // /signin lives in the Next.js App Router (not the SPA react-router tree),
+      // so a real navigation is required — react-router <Link> would no-op.
+      closePopover();
+      window.location.href = '/signin?switch=1';
+      return;
+    }
+    closePopover();
+  };
+
   return (
     <Flexbox gap={2} style={{ minWidth: 300 }}>
       {isDesktop || isLoginWithAuth ? (
@@ -63,7 +78,7 @@ const PanelContent: FC<{ closePopover: () => void }> = ({ closePopover }) => {
 
       <Menu items={mainItems} onClick={closePopover} />
       <LangButton placement={'right' as any} />
-      <Menu items={logoutItems} onClick={handleSignOut} />
+      <Menu items={logoutItems} onClick={handleLogoutMenuClick} />
     </Flexbox>
   );
 };
