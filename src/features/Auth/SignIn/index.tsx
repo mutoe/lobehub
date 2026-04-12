@@ -16,6 +16,8 @@ const SignIn = () => {
     handleCheckUser,
     handleForgotPassword,
     handleGoToSignup,
+    handleRecentAccountClick,
+    handleRemoveRecentAccount,
     handleResendEmail,
     handleSignIn,
     handleSocialSignIn,
@@ -23,6 +25,7 @@ const SignIn = () => {
     lastAuthProvider,
     loading,
     oAuthSSOProviders,
+    recentAccounts,
     sending,
     sessionExpired,
     sentInfo,
@@ -64,11 +67,14 @@ const SignIn = () => {
         lastAuthProvider={lastAuthProvider}
         loading={loading}
         oAuthSSOProviders={oAuthSSOProviders}
+        recentAccounts={recentAccounts}
         serverConfigInit={serverConfigInit}
         sessionExpired={sessionExpired}
         socialLoading={socialLoading}
         onCheckUser={handleCheckUser}
         onGoToSignup={handleGoToSignup}
+        onRecentAccountClick={handleRecentAccountClick}
+        onRemoveRecentAccount={handleRemoveRecentAccount}
         onResetEmail={handleBackToEmail}
         onSetPassword={handleForgotPassword}
         onSocialSignIn={handleSocialSignIn}
