@@ -9,9 +9,10 @@ import type { ResolveUsernameResponseData } from '@/app/(backend)/api/auth/resol
 import { useBusinessSignin } from '@/business/client/hooks/useBusinessSignin';
 import { useAuthServerConfigStore } from '@/features/AuthShell';
 import { trackLoginOrSignupClicked } from '@/features/User/UserLoginOrSignup/trackLoginOrSignupClicked';
-import { requestPasswordReset, signIn } from '@/libs/better-auth/auth-client';
+import { multiSession, requestPasswordReset, signIn } from '@/libs/better-auth/auth-client';
 import { isBuiltinProvider, normalizeProviderId } from '@/libs/better-auth/utils/client';
 import { buildOnboardingRedirectUrl, sanitizeRedirectPath } from '@/utils/onboardingRedirect';
+import { type RecentAccount } from '@/utils/recentAccounts';
 
 import { EMAIL_REGEX, USERNAME_REGEX } from './SignInEmailStep';
 
@@ -65,6 +66,33 @@ export const useSignIn = () => {
       return null;
     }
   });
+  const [recentAccounts, setRecentAccounts] = useState<RecentAccount[]>([]);
+
+  const refreshRecentAccounts = async () => {
+    try {
+      const result = await multiSession.listDeviceSessions();
+      const sessions = (result?.data ?? []) as Array<{
+        session: { token: string };
+        user: { email: string; image?: string | null; name?: string | null };
+      }>;
+      setRecentAccounts(
+        sessions
+          .filter((s) => s.user?.email)
+          .map((s) => ({
+            avatar: s.user.image ?? undefined,
+            displayName: s.user.name ?? undefined,
+            email: s.user.email,
+            sessionToken: s.session.token,
+          })),
+      );
+    } catch {
+      setRecentAccounts([]);
+    }
+  };
+
+  useEffect(() => {
+    void refreshRecentAccounts();
+  }, []);
   const serverConfigInit = useAuthServerConfigStore((s) => s.serverConfigInit);
   const oAuthSSOProviders = useAuthServerConfigStore((s) => s.serverConfig.oAuthSSOProviders) || [];
   const { getAdditionalData, preSocialSigninCheck, ssoProviders } = useBusinessSignin();
@@ -294,6 +322,36 @@ export const useSignIn = () => {
     }
   };
 
+  const handleRecentAccountClick = async (account: RecentAccount) => {
+    setLoading(true);
+    try {
+      const { error } = await multiSession.setActive({ sessionToken: account.sessionToken });
+      if (error) {
+        // Session may have been revoked or expired on server — drop it from the list
+        message.error(error.message || t('betterAuth.signin.error'));
+        await multiSession.revoke({ sessionToken: account.sessionToken }).catch(() => undefined);
+        await refreshRecentAccounts();
+        return;
+      }
+      const callbackUrl = searchParams.get('callbackUrl') || '/';
+      window.location.href = callbackUrl;
+    } catch (error) {
+      console.error('Switch account error:', error);
+      message.error(t('betterAuth.signin.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveRecentAccount = async (account: RecentAccount) => {
+    try {
+      await multiSession.revoke({ sessionToken: account.sessionToken });
+    } catch {
+      // best effort
+    }
+    await refreshRecentAccounts();
+  };
+
   const handleBackToEmail = () => {
     setStep('email');
     setEmail('');
@@ -383,6 +441,8 @@ export const useSignIn = () => {
     handleCheckUser,
     handleForgotPassword,
     handleGoToSignup,
+    handleRecentAccountClick,
+    handleRemoveRecentAccount,
     handleResendEmail,
     handleSignIn,
     handleSocialSignIn,
@@ -390,6 +450,7 @@ export const useSignIn = () => {
     lastAuthProvider,
     loading,
     oAuthSSOProviders: sortedProviders,
+    recentAccounts,
     sending,
     sessionExpired,
     sentInfo,
