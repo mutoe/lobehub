@@ -11,6 +11,7 @@ import { message } from '@/components/AntdStaticMethods';
 import { trackLoginOrSignupClicked } from '@/features/User/UserLoginOrSignup/trackLoginOrSignupClicked';
 import { requestPasswordReset, signIn } from '@/libs/better-auth/auth-client';
 import { isBuiltinProvider, normalizeProviderId } from '@/libs/better-auth/utils/client';
+import { getRecentAccounts, type RecentAccount, removeRecentAccount } from '@/utils/recentAccounts';
 
 import { useAuthServerConfigStore } from '../_layout/AuthServerConfigProvider';
 import { EMAIL_REGEX, USERNAME_REGEX } from './SignInEmailStep';
@@ -50,6 +51,7 @@ export const useSignIn = () => {
       return null;
     }
   });
+  const [recentAccounts, setRecentAccounts] = useState<RecentAccount[]>(() => getRecentAccounts());
   const serverConfigInit = useAuthServerConfigStore((s) => s.serverConfigInit);
   const oAuthSSOProviders = useAuthServerConfigStore((s) => s.serverConfig.oAuthSSOProviders) || [];
   const {
@@ -250,6 +252,16 @@ export const useSignIn = () => {
     }
   };
 
+  const handleRecentAccountClick = (account: RecentAccount) => {
+    form.setFieldValue('email', account.email);
+    handleCheckUser({ email: account.email });
+  };
+
+  const handleRemoveRecentAccount = (email: string) => {
+    removeRecentAccount(email);
+    setRecentAccounts(getRecentAccounts());
+  };
+
   const handleBackToEmail = () => {
     setStep('email');
     setEmail('');
@@ -297,12 +309,15 @@ export const useSignIn = () => {
     handleCheckUser,
     handleForgotPassword,
     handleGoToSignup,
+    handleRecentAccountClick,
+    handleRemoveRecentAccount,
     handleSignIn,
     handleSocialSignIn,
     isSocialOnly,
     lastAuthProvider,
     loading,
     oAuthSSOProviders: sortedProviders,
+    recentAccounts,
     serverConfigInit: ENABLE_BUSINESS_FEATURES ? true : serverConfigInit,
     socialLoading,
     step,
