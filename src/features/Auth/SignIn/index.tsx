@@ -17,12 +17,15 @@ const SignIn = () => {
     handleBackToEmail,
     handleForgotPassword,
     handleGoToSignup,
+    handleRecentAccountClick,
+    handleRemoveRecentAccount,
     handleResendEmail,
     handleSocialSignIn,
     isSocialOnly,
     lastAuthProvider,
     loading,
     oAuthSSOProviders,
+    recentAccounts,
     sending,
     sessionExpired,
     sentInfo,
@@ -66,11 +69,14 @@ const SignIn = () => {
         lastAuthProvider={lastAuthProvider}
         loading={loading}
         oAuthSSOProviders={oAuthSSOProviders}
+        recentAccounts={recentAccounts}
         serverConfigInit={serverConfigInit}
         sessionExpired={sessionExpired}
         setAgreementChecked={setAgreementChecked}
         socialLoading={socialLoading}
         onGoToSignup={handleGoToSignup}
+        onRecentAccountClick={handleRecentAccountClick}
+        onRemoveRecentAccount={handleRemoveRecentAccount}
         onResetEmail={handleBackToEmail}
         onSetPassword={handleForgotPassword}
         onSocialSignIn={handleSocialSignIn}

@@ -76,7 +76,6 @@ const LoginStep = memo<LoginStepProps>(({ mode = 'onboarding', onBack, onNext })
   const [hasLegacyLocalDb, setHasLegacyLocalDb] = useState(false);
   const [localRemainingSeconds, setLocalRemainingSeconds] = useState<number | null>(null);
   const { compositionProps, isComposingRef } = useIMECompositionEvent();
-
   const [
     dataSyncConfig,
     isConnectingServer,

@@ -1,6 +1,7 @@
 import { BRANDING_NAME } from '@lobechat/business-const';
 import {
   Alert,
+  Avatar,
   Badge,
   Button,
   createStaticStyles,
@@ -11,19 +12,33 @@ import {
   Text,
 } from '@lobehub/ui';
 import { Form, type FormInstance } from '@lobehub/ui/form';
-import { Mail } from 'lucide-react';
+import { Mail, X } from 'lucide-react';
 import { type CSSProperties, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AuthIcons from '@/components/AuthIcons';
 import AuthCard from '@/features/AuthCard';
 import AuthAgreement from '@/features/AuthShell/AuthAgreement';
+import { type RecentAccount } from '@/utils/recentAccounts';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   inlineLink: css`
     cursor: pointer;
     color: ${cssVar.colorPrimary};
     text-decoration: underline;
+  `,
+  recentAccount: css`
+    cursor: pointer;
+
+    padding-block: 8px;
+    padding-inline: 12px;
+    border-radius: 8px;
+
+    transition: background 0.2s;
+
+    &:hover {
+      background: ${cssVar.colorFillSecondary};
+    }
   `,
 }));
 
@@ -53,9 +68,12 @@ export interface SignInEmailStepProps {
   loading: boolean;
   oAuthSSOProviders: string[];
   onGoToSignup: () => void;
+  onRecentAccountClick?: (account: RecentAccount) => void;
+  onRemoveRecentAccount?: (account: RecentAccount) => void;
   onResetEmail: () => void;
   onSetPassword: () => void;
   onSocialSignIn: (provider: string) => void;
+  recentAccounts?: RecentAccount[];
   serverConfigInit: boolean;
   sessionExpired?: boolean;
   setAgreementChecked: (checked: boolean) => void;
@@ -71,11 +89,14 @@ export const SignInEmailStep = ({
   lastAuthProvider,
   loading,
   oAuthSSOProviders,
+  recentAccounts,
   serverConfigInit,
   sessionExpired,
   setAgreementChecked,
   socialLoading,
   onGoToSignup,
+  onRecentAccountClick,
+  onRemoveRecentAccount,
   onResetEmail,
   onSetPassword,
   onSocialSignIn,
@@ -161,6 +182,49 @@ export const SignInEmailStep = ({
       )}
       {serverConfigInit && disableEmailPassword && oAuthSSOProviders.length === 0 && (
         <Alert showIcon description={t('betterAuth.signin.ssoOnlyNoProviders')} type="warning" />
+      )}
+      {recentAccounts && recentAccounts.length > 0 && (
+        <Flexbox gap={8}>
+          <Text fontSize={13} type={'secondary'}>
+            {t('betterAuth.signin.recentAccounts', { defaultValue: 'Recent accounts' })}
+          </Text>
+          {recentAccounts.map((account) => (
+            <Flexbox
+              horizontal
+              align={'center'}
+              className={styles.recentAccount}
+              gap={10}
+              key={account.email}
+              onClick={() => onRecentAccountClick?.(account)}
+            >
+              <Avatar
+                avatar={account.avatar}
+                size={32}
+                title={account.displayName || account.email}
+              />
+              <Flexbox flex={1} style={{ minWidth: 0 }}>
+                {account.displayName && (
+                  <Text ellipsis style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.4 }}>
+                    {account.displayName}
+                  </Text>
+                )}
+                <Text ellipsis style={{ fontSize: 12, lineHeight: 1.4 }} type={'secondary'}>
+                  {account.email}
+                </Text>
+              </Flexbox>
+              <Button
+                icon={X}
+                size={'small'}
+                type={'text'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveRecentAccount?.(account);
+                }}
+              />
+            </Flexbox>
+          ))}
+          <Divider style={{ margin: '4px 0' }} />
+        </Flexbox>
       )}
       {showEmailForm && (
         <Form form={form} gap={0} layout="vertical">
