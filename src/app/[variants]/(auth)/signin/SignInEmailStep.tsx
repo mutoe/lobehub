@@ -1,14 +1,15 @@
 import { BRANDING_NAME } from '@lobechat/business-const';
-import { Alert, Button, Flexbox, Icon, Input, Skeleton, Text } from '@lobehub/ui';
+import { Alert, Avatar, Button, Flexbox, Icon, Input, Skeleton, Text } from '@lobehub/ui';
 import { type FormInstance, type InputRef } from 'antd';
 import { Badge, Divider, Form } from 'antd';
 import { createStaticStyles } from 'antd-style';
-import { ChevronRight, Mail } from 'lucide-react';
+import { ChevronRight, Mail, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import AuthIcons from '@/components/AuthIcons';
 import { PRIVACY_URL, TERMS_URL } from '@/const/url';
+import { type RecentAccount } from '@/utils/recentAccounts';
 
 import AuthCard from '../../../../features/AuthCard';
 
@@ -31,8 +32,11 @@ export interface SignInEmailStepProps {
   loading: boolean;
   oAuthSSOProviders: string[];
   onCheckUser: (values: { email: string }) => Promise<void>;
+  onRecentAccountClick?: (account: RecentAccount) => void;
+  onRemoveRecentAccount?: (account: RecentAccount) => void;
   onSetPassword: () => void;
   onSocialSignIn: (provider: string) => void;
+  recentAccounts?: RecentAccount[];
   serverConfigInit: boolean;
   socialLoading: string | null;
 }
@@ -44,9 +48,12 @@ export const SignInEmailStep = ({
   lastAuthProvider,
   loading,
   oAuthSSOProviders,
+  recentAccounts,
   serverConfigInit,
   socialLoading,
   onCheckUser,
+  onRecentAccountClick,
+  onRemoveRecentAccount,
   onSetPassword,
   onSocialSignIn,
 }: SignInEmailStepProps) => {
@@ -160,6 +167,60 @@ export const SignInEmailStep = ({
       )}
       {serverConfigInit && disableEmailPassword && oAuthSSOProviders.length === 0 && (
         <Alert showIcon description={t('betterAuth.signin.ssoOnlyNoProviders')} type="warning" />
+      )}
+      {recentAccounts && recentAccounts.length > 0 && (
+        <Flexbox gap={8}>
+          <Text fontSize={13} type={'secondary'}>
+            {t('betterAuth.signin.recentAccounts', { defaultValue: 'Recent accounts' })}
+          </Text>
+          {recentAccounts.map((account) => (
+            <Flexbox
+              horizontal
+              align={'center'}
+              gap={10}
+              key={account.email}
+              style={{
+                borderRadius: 8,
+                cursor: 'pointer',
+                padding: '8px 12px',
+                transition: 'background 0.2s',
+              }}
+              onClick={() => onRecentAccountClick?.(account)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--ant-color-fill-secondary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <Avatar
+                avatar={account.avatar}
+                size={32}
+                title={account.displayName || account.email}
+              />
+              <Flexbox flex={1} style={{ minWidth: 0 }}>
+                {account.displayName && (
+                  <Text ellipsis style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.4 }}>
+                    {account.displayName}
+                  </Text>
+                )}
+                <Text ellipsis style={{ fontSize: 12, lineHeight: 1.4 }} type={'secondary'}>
+                  {account.email}
+                </Text>
+              </Flexbox>
+              <Button
+                icon={X}
+                size={'small'}
+                type={'text'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveRecentAccount?.(account);
+                }}
+              />
+            </Flexbox>
+          ))}
+          <Divider style={{ margin: '4px 0' }} />
+        </Flexbox>
       )}
       {!disableEmailPassword && (
         <Form
