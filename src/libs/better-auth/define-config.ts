@@ -8,7 +8,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { verifyPassword as defaultVerifyPassword } from 'better-auth/crypto';
 import { type BetterAuthOptions } from 'better-auth/minimal';
 import { betterAuth } from 'better-auth/minimal';
-import { admin, emailOTP, genericOAuth, magicLink } from 'better-auth/plugins';
+import { admin, emailOTP, genericOAuth, magicLink, multiSession } from 'better-auth/plugins';
 import { type BetterAuthPlugin } from 'better-auth/types';
 import { emailHarmony } from 'better-auth-harmony';
 import { validateEmail } from 'better-auth-harmony/email';
@@ -266,6 +266,7 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
       expo(),
       emailHarmony({ allowNormalizedSignin: false, validator: customEmailValidator }),
       admin(),
+      multiSession({ maximumSessions: 5 }),
       // Email OTP plugin for mobile verification
       emailOTP({
         expiresIn: OTP_EXPIRES_IN,
