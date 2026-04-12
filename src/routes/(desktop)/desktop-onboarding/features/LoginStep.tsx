@@ -6,7 +6,7 @@ import { Alert, Button, Center, Flexbox, Icon, Input, Text } from '@lobehub/ui';
 import { Divider } from 'antd';
 import { cssVar } from 'antd-style';
 import { Cloud, Server, Undo2Icon } from 'lucide-react';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import urlJoin from 'url-join';
 
@@ -18,6 +18,7 @@ import { remoteServerService } from '@/services/electron/remoteServer';
 import { electronSystemService } from '@/services/electron/system';
 import { useElectronStore } from '@/store/electron';
 import { setDesktopAutoOidcFirstOpenHandled } from '@/utils/electron/autoOidc';
+import { getRecentAccounts, removeRecentAccount } from '@/utils/recentAccounts';
 
 import LobeMessage from '../components/LobeMessage';
 
@@ -71,6 +72,8 @@ const LoginStep = memo<LoginStepProps>(({ onBack, onNext }) => {
   const [hasLegacyLocalDb, setHasLegacyLocalDb] = useState(false);
   const [localRemainingSeconds, setLocalRemainingSeconds] = useState<number | null>(null);
   const { compositionProps, isComposingRef } = useIMECompositionEvent();
+  const [recentAccountsVersion, setRecentAccountsVersion] = useState(0);
+  const recentAccounts = useMemo(() => getRecentAccounts(), [recentAccountsVersion]);
 
   const [
     dataSyncConfig,
@@ -501,6 +504,47 @@ const LoginStep = memo<LoginStepProps>(({ onBack, onNext }) => {
       </Flexbox>
 
       <Flexbox align={'flex-start'} gap={16} style={{ width: '100%' }} width={'100%'}>
+        {recentAccounts.length > 0 && cloudLoginStatus === 'idle' && (
+          <Flexbox gap={8} style={{ width: '100%' }}>
+            <Text fontSize={13} type={'secondary'}>
+              {t('screen5.recentAccounts', { defaultValue: 'Recent accounts' })}
+            </Text>
+            {recentAccounts.map((account) => (
+              <Flexbox
+                horizontal
+                align={'center'}
+                gap={10}
+                key={account.email}
+                style={{
+                  background: cssVar.colorFillSecondary,
+                  borderRadius: 8,
+                  padding: '8px 12px',
+                }}
+              >
+                <Flexbox flex={1} style={{ minWidth: 0 }}>
+                  {account.displayName && (
+                    <Text ellipsis style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.4 }}>
+                      {account.displayName}
+                    </Text>
+                  )}
+                  <Text ellipsis style={{ fontSize: 12, lineHeight: 1.4 }} type={'secondary'}>
+                    {account.email}
+                  </Text>
+                </Flexbox>
+                <Button
+                  size={'small'}
+                  type={'text'}
+                  onClick={() => {
+                    removeRecentAccount(account.email);
+                    setRecentAccountsVersion((v) => v + 1);
+                  }}
+                >
+                  ✕
+                </Button>
+              </Flexbox>
+            ))}
+          </Flexbox>
+        )}
         {renderCloudContent()}
         <Flexbox horizontal justify={'center'} style={{ width: '100%' }}>
           {hasLegacyLocalDb && (
