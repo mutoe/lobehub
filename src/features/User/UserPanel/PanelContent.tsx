@@ -53,6 +53,14 @@ const PanelContent: FC<{ closePopover: () => void }> = ({ closePopover }) => {
       return;
     }
 
+    if (key === 'switchAccount') {
+      // /signin is served by a separate auth SPA entry, not the main react-router
+      // tree, so a real navigation is required — react-router <Link> would no-op.
+      closePopover();
+      window.location.href = '/signin?switch=1';
+      return;
+    }
+
     closePopover();
   };
 

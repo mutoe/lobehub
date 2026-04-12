@@ -71,7 +71,26 @@ export class UserAuthActionImpl {
       // Best-effort: don't block sign-out if the cleanup request fails
     }
 
-    const { signOut } = await import('@/libs/better-auth/auth-client');
+    // With multiSession plugin enabled, signOut() revokes ALL device sessions for this
+    // user — that defeats the quick-switch UX. Instead revoke only the *current* session
+    // by token, leaving other accounts' cookies in the jar so /signin can list them.
+    const { getSession, multiSession, signOut } = await import('@/libs/better-auth/auth-client');
+    try {
+      const session = await getSession();
+      const token = session?.data?.session?.token;
+      if (token) {
+        await multiSession.revoke({ sessionToken: token });
+        // Drop the persisted active scope so the next boot doesn't hydrate the
+        // signed-out user's cache (localStorage survives the reload below).
+        clearActiveScopeKey();
+        // Full page reload — same intent as upstream signOut.onSuccess
+        window.location.href = '/signin';
+        return;
+      }
+    } catch {
+      // Fall back to full signOut if revoke path fails
+    }
+
     await signOut({
       fetchOptions: {
         onSuccess: () => {
