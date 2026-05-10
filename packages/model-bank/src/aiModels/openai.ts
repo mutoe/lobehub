@@ -1473,6 +1473,26 @@ export const openaiImageModels: AIImageModelCard[] = [
   },
   {
     description:
+      "OpenAI's next-generation multimodal image model with native reasoning, up to 4K resolution, near-perfect text rendering, and high-fidelity multilingual support.",
+    displayName: 'GPT Image 2 All',
+    enabled: true,
+    id: 'gpt-image-2-all',
+    parameters: gptImage2Schema,
+    pricing: {
+      approximatePricePerImage: 0.053,
+      units: [
+        { name: 'textInput', rate: 5, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput_cacheRead', rate: 1.25, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput', rate: 8, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput_cacheRead', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageOutput', rate: 30, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    releasedAt: '2026-04-21',
+    type: 'image',
+  },
+  {
+    description:
       'An enhanced GPT Image 1 model with 4× faster generation, more precise editing, and improved text rendering.',
     displayName: 'GPT Image 1.5',
     id: 'gpt-image-1.5',
