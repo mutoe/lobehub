@@ -12,7 +12,6 @@ import {
 import type { UserServiceModelConfig } from '@lobechat/types';
 import { desc, eq } from 'drizzle-orm';
 
-import { UserModel } from '@/database/models/user';
 import { getBusinessModelRuntimeHooks } from '@/business/server/model-runtime';
 import { UserModel } from '@/database/models/user';
 import { UserMemoryModel } from '@/database/models/userMemory';
