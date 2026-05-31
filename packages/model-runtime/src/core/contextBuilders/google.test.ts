@@ -48,7 +48,7 @@ describe('google contextBuilders', () => {
 
       const result = await buildGooglePart(content);
 
-      expect(result).toEqual({ text: 'Hello', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE });
+      expect(result).toEqual({ text: 'Hello' });
     });
 
     it('should handle thinking type messages', async () => {
@@ -86,7 +86,6 @@ describe('google contextBuilders', () => {
           data: 'iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==',
           mimeType: 'image/png',
         },
-        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
       });
     });
 
@@ -109,7 +108,6 @@ describe('google contextBuilders', () => {
           data: PNG_BASE64,
           mimeType: 'image/png',
         },
-        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
       });
     });
 
@@ -140,7 +138,6 @@ describe('google contextBuilders', () => {
           data: mockBase64,
           mimeType: 'image/png',
         },
-        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
       });
 
       expect(imageToBase64Module.imageUrlToBase64).toHaveBeenCalledWith(imageUrl);
@@ -223,7 +220,6 @@ describe('google contextBuilders', () => {
           data: 'mockBase64Data',
           mimeType: 'image/heic',
         },
-        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
       });
 
       expect(imageToBase64Spy).toHaveBeenCalledWith(imageUrl);
@@ -257,7 +253,6 @@ describe('google contextBuilders', () => {
           data: 'mockBase64Data',
           mimeType: 'image/png',
         },
-        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
       });
 
       expect(imageToBase64Spy).toHaveBeenCalledWith(imageUrl);
@@ -339,7 +334,6 @@ describe('google contextBuilders', () => {
           data: 'mockVideoBase64Data',
           mimeType: 'video/mp4',
         },
-        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
       });
     });
 
@@ -424,6 +418,24 @@ describe('google contextBuilders', () => {
       const result = await buildGooglePart(content);
       expect(result).toBeUndefined();
     });
+
+    it('should NOT attach thoughtSignature by default (user turn)', async () => {
+      // Regression: attaching the magic signature to user turns makes Gemini 3.x
+      // reject the request with `illegal base64 data at input byte 4`.
+      const content: UserMessageContentPart = { text: 'Hello', type: 'text' };
+
+      const result = await buildGooglePart(content);
+
+      expect(result).toEqual({ text: 'Hello' });
+    });
+
+    it('should attach thoughtSignature when withThoughtSignature is true (model turn)', async () => {
+      const content: UserMessageContentPart = { text: 'Hello', type: 'text' };
+
+      const result = await buildGooglePart(content, { withThoughtSignature: true });
+
+      expect(result).toEqual({ text: 'Hello', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE });
+    });
   });
 
   describe('buildGoogleMessage', () => {
@@ -450,7 +462,7 @@ describe('google contextBuilders', () => {
       const converted = await buildGoogleMessage(message);
 
       expect(converted).toEqual({
-        parts: [{ text: 'Hi', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+        parts: [{ text: 'Hi' }],
         role: 'user',
       });
     });
@@ -474,10 +486,9 @@ describe('google contextBuilders', () => {
 
       expect(converted).toEqual({
         parts: [
-          { text: 'Check this image:', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE },
+          { text: 'Check this image:' },
           {
             inlineData: { data: '...', mimeType: 'image/png' },
-            thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
           },
         ],
         role: 'user',
@@ -656,13 +667,12 @@ describe('google contextBuilders', () => {
             parts: [
               {
                 text: '<plugins>Web Browsing plugin available</plugins>',
-                thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
               },
             ],
             role: 'user',
           },
           {
-            parts: [{ text: '杭州天气如何', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+            parts: [{ text: '杭州天气如何' }],
             role: 'user',
           },
           {
@@ -748,7 +758,7 @@ describe('google contextBuilders', () => {
 
         expect(contents).toEqual([
           {
-            parts: [{ text: '杭州天气如何', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+            parts: [{ text: '杭州天气如何' }],
             role: 'user',
           },
           {
@@ -834,7 +844,7 @@ describe('google contextBuilders', () => {
 
         expect(contents).toEqual([
           {
-            parts: [{ text: 'First question', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+            parts: [{ text: 'First question' }],
             role: 'user',
           },
           {
@@ -862,7 +872,7 @@ describe('google contextBuilders', () => {
             role: 'user',
           },
           {
-            parts: [{ text: 'Second question', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+            parts: [{ text: 'Second question' }],
             role: 'user',
           },
           {
@@ -934,13 +944,12 @@ describe('google contextBuilders', () => {
             parts: [
               {
                 text: '<plugins>Web Browsing plugin available</plugins>',
-                thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
               },
             ],
             role: 'user',
           },
           {
-            parts: [{ text: '杭州天气如何', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+            parts: [{ text: '杭州天气如何' }],
             role: 'user',
           },
           {
@@ -969,7 +978,7 @@ describe('google contextBuilders', () => {
             role: 'user',
           },
           {
-            parts: [{ text: 'Please try again', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+            parts: [{ text: 'Please try again' }],
             role: 'user',
           },
         ]);
@@ -985,7 +994,7 @@ describe('google contextBuilders', () => {
       const converted = await buildGoogleMessage(message);
 
       expect(converted).toEqual({
-        parts: [{ text: '', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+        parts: [{ text: '' }],
         role: 'user',
       });
     });
@@ -1025,7 +1034,7 @@ describe('google contextBuilders', () => {
       expect(contents).toHaveLength(1);
       expect(contents).toEqual([
         {
-          parts: [{ text: 'Hello', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+          parts: [{ text: 'Hello' }],
           role: 'user',
         },
       ]);
@@ -1042,7 +1051,7 @@ describe('google contextBuilders', () => {
       expect(contents).toHaveLength(2);
       expect(contents).toEqual([
         {
-          parts: [{ text: 'Hello', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+          parts: [{ text: 'Hello' }],
           role: 'user',
         },
         {
@@ -1075,10 +1084,9 @@ describe('google contextBuilders', () => {
       expect(contents).toEqual([
         {
           parts: [
-            { text: 'Hello', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE },
+            { text: 'Hello' },
             {
               inlineData: { data: '...', mimeType: 'image/png' },
-              thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
             },
           ],
           role: 'user',
@@ -1152,7 +1160,7 @@ describe('google contextBuilders', () => {
       expect(contents).toHaveLength(2);
       expect(contents).toEqual([
         {
-          parts: [{ text: 'Hello', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+          parts: [{ text: 'Hello' }],
           role: 'user',
         },
         {
@@ -1174,7 +1182,7 @@ describe('google contextBuilders', () => {
       expect(contents).toHaveLength(2);
       expect(contents).toEqual([
         {
-          parts: [{ text: 'Hello', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+          parts: [{ text: 'Hello' }],
           role: 'user',
         },
         {
@@ -1232,7 +1240,6 @@ describe('google contextBuilders', () => {
           parts: [
             {
               text: 'What is the weather in London and Tokyo?',
-              thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
             },
           ],
           role: 'user',
@@ -1306,11 +1313,11 @@ describe('google contextBuilders', () => {
 
       expect(contents).toEqual([
         {
-          parts: [{ text: 'system prompt', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+          parts: [{ text: 'system prompt' }],
           role: 'user',
         },
         {
-          parts: [{ text: 'LobeChat 最新版本', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+          parts: [{ text: 'LobeChat 最新版本' }],
           role: 'user',
         },
         {
