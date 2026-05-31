@@ -106,7 +106,12 @@ const buildExternalUrlFileDataPart = async (
 };
 
 /**
- * Convert OpenAI content part to Google Part format
+ * Convert OpenAI content part to Google Part format.
+ *
+ * `options.withThoughtSignature` is only set for model (assistant) turns. Attaching
+ * the magic thoughtSignature to user turns makes Gemini 3.x reject the request with
+ * `illegal base64 data at input byte 4`, because the Gemini Developer API tries
+ * to base64-decode the signature on user parts (older 2.5 models ignored it).
  *
  * TODO: urlContext tool only supports files up to 34MB. In the future, we should
  * detect file URLs in the conversation and use External URL feature (fileData.fileUri)
@@ -115,8 +120,12 @@ const buildExternalUrlFileDataPart = async (
  */
 export const buildGooglePart = async (
   content: UserMessageContentPart,
-  options?: GoogleMessageBuildOptions,
+  options?: GoogleMessageBuildOptions & { withThoughtSignature?: boolean },
 ): Promise<Part | undefined> => {
+  const thoughtSignature = options?.withThoughtSignature
+    ? GEMINI_MAGIC_THOUGHT_SIGNATURE
+    : undefined;
+
   switch (content.type) {
     default: {
       return undefined;
@@ -125,7 +134,7 @@ export const buildGooglePart = async (
     case 'text': {
       return {
         text: content.text,
-        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+        ...(thoughtSignature && { thoughtSignature }),
       };
     }
 
@@ -143,7 +152,7 @@ export const buildGooglePart = async (
 
         return {
           inlineData: { data: base64, mimeType: resolvedMimeType },
-          thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+          ...(thoughtSignature && { thoughtSignature }),
         };
       }
 
@@ -161,7 +170,7 @@ export const buildGooglePart = async (
 
         return {
           inlineData: { data: urlBase64, mimeType: resolvedMimeType || 'image/png' },
-          thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+          ...(thoughtSignature && { thoughtSignature }),
         };
       }
 
@@ -178,7 +187,7 @@ export const buildGooglePart = async (
 
         return {
           inlineData: { data: base64, mimeType: mimeType || 'video/mp4' },
-          thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+          ...(thoughtSignature && { thoughtSignature }),
         };
       }
 
@@ -195,7 +204,7 @@ export const buildGooglePart = async (
 
         return {
           inlineData: { data: urlBase64, mimeType: urlMimeType },
-          thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+          ...(thoughtSignature && { thoughtSignature }),
         };
       }
 
@@ -330,11 +339,23 @@ export const buildGoogleMessage = async (
     }
   }
 
+  // thoughtSignature is only meaningful on model (assistant) turns. Adding it to
+  // user turns breaks Gemini 3.x with `illegal base64 data at input byte 4`.
+  const isModelTurn = message.role === 'assistant';
+
   const getParts = async () => {
     if (typeof content === 'string')
-      return [{ text: content, thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }];
+      return [
+        isModelTurn
+          ? { text: content, thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }
+          : { text: content },
+      ];
 
-    const parts = await Promise.all(content.map(async (c) => await buildGooglePart(c, options)));
+    const parts = await Promise.all(
+      content.map(
+        async (c) => await buildGooglePart(c, { ...options, withThoughtSignature: isModelTurn }),
+      ),
+    );
     return parts.filter(Boolean) as Part[];
   };
 
