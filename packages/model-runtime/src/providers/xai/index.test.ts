@@ -28,8 +28,40 @@ describe('LobeXAI - custom features', () => {
     vi.spyOn(instance['client'].responses, 'create').mockResolvedValue(new ReadableStream() as any);
   });
 
-  describe('Responses API routing', () => {
-    it('should ignore chatCompletion apiMode and remove camelCase penalty parameters', async () => {
+  describe('apiMode switch (Responses API vs Chat Completions)', () => {
+    it('uses the Responses API by default (switch untouched)', async () => {
+      await instance.chat({
+        messages: [{ content: 'Hello', role: 'user' }],
+        model: 'grok-4.3',
+      } as any);
+
+      expect(instance['client'].responses.create).toHaveBeenCalled();
+      expect(instance['client'].chat.completions.create).not.toHaveBeenCalled();
+    });
+
+    it('uses the Responses API when apiMode is responses (switch on)', async () => {
+      await instance.chat({
+        apiMode: 'responses',
+        messages: [{ content: 'Hello', role: 'user' }],
+        model: 'grok-4.3',
+      } as any);
+
+      expect(instance['client'].responses.create).toHaveBeenCalled();
+      expect(instance['client'].chat.completions.create).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Chat Completions when apiMode is chatCompletion (switch off)', async () => {
+      await instance.chat({
+        apiMode: 'chatCompletion',
+        messages: [{ content: 'Hello', role: 'user' }],
+        model: 'grok-4.3',
+      } as any);
+
+      expect(instance['client'].chat.completions.create).toHaveBeenCalled();
+      expect(instance['client'].responses.create).not.toHaveBeenCalled();
+    });
+
+    it('removes unsupported penalty parameters on the Chat Completions path', async () => {
       await instance.chat({
         apiMode: 'chatCompletion',
         frequencyPenalty: 0.4,
@@ -38,30 +70,14 @@ describe('LobeXAI - custom features', () => {
         presencePenalty: 0.6,
       } as any);
 
-      const createCall = (instance['client'].responses.create as Mock).mock.calls[0][0];
-
-      expect(createCall.frequencyPenalty).toBeUndefined();
-      expect(createCall.presencePenalty).toBeUndefined();
-      expect(createCall.stream).toBe(true);
-      expect(instance['client'].chat.completions.create).not.toHaveBeenCalled();
-    });
-
-    it('should remove snake_case penalty parameters via forced Responses API', async () => {
-      await instance.chat({
-        apiMode: 'chatCompletion',
-        frequency_penalty: 0.4,
-        messages: [{ content: 'Hello', role: 'user' }],
-        model: 'grok-4-fast-non-reasoning',
-        presence_penalty: 0.6,
-      } as any);
-
-      const createCall = (instance['client'].responses.create as Mock).mock.calls[0][0];
+      const createCall = (instance['client'].chat.completions.create as Mock).mock.calls[0][0];
 
       expect(createCall.frequency_penalty).toBeUndefined();
       expect(createCall.presence_penalty).toBeUndefined();
+      expect(createCall.stream).toBe(true);
     });
 
-    it('should remove penalty parameters for Grok 3 models via Responses API', async () => {
+    it('keeps penalty parameters for grok-3 on the Chat Completions path', async () => {
       await instance.chat({
         apiMode: 'chatCompletion',
         frequency_penalty: 0.4,
@@ -70,15 +86,15 @@ describe('LobeXAI - custom features', () => {
         presence_penalty: 0.6,
       } as any);
 
-      const createCall = (instance['client'].responses.create as Mock).mock.calls[0][0];
+      const createCall = (instance['client'].chat.completions.create as Mock).mock.calls[0][0];
 
-      expect(createCall.frequency_penalty).toBeUndefined();
-      expect(createCall.presence_penalty).toBeUndefined();
+      expect(createCall.frequency_penalty).toBe(0.4);
+      expect(createCall.presence_penalty).toBe(0.6);
     });
 
-    it('should map chat response_format to Responses API text.format', async () => {
+    it('maps chat response_format to Responses API text.format (Responses path)', async () => {
       await instance.chat({
-        apiMode: 'chatCompletion',
+        apiMode: 'responses',
         messages: [{ content: 'Hello', role: 'user' }],
         model: 'grok-4',
         response_format: {
