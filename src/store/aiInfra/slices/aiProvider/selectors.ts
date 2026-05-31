@@ -127,7 +127,11 @@ const isProviderEnableResponseApi = (id: string) => (s: AIProviderStoreState) =>
 
   if (typeof enableResponseApi === 'boolean') return enableResponseApi;
 
-  return id === 'openai';
+  // Providers whose official API defaults to the Responses spec. xAI's grok
+  // models rely on the Responses API (encrypted reasoning, web_search/x_search),
+  // so default it on while still letting users turn the switch off (e.g. when
+  // pointing at a relay that only supports /chat/completions).
+  return id === 'openai' || id === 'xai';
 };
 
 const isInitAiProviderRuntimeState = (s: AIProviderStoreState) => !!s.isInitAiProviderRuntimeState;

@@ -17,6 +17,7 @@ const XAI: ModelProviderCard = {
     },
     sdkType: 'openai',
     showModelFetcher: true,
+    supportResponsesApi: true,
   },
   url: 'https://x.ai/api',
 };

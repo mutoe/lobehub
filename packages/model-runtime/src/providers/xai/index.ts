@@ -105,10 +105,15 @@ const mapResponseFormatToResponsesText = (
 export const LobeXAI = createOpenAICompatibleRuntime({
   baseURL: 'https://api.x.ai/v1',
   chatCompletion: {
+    // Do NOT hardcode `apiMode: 'responses'` here. The factory already decides
+    // Responses-vs-ChatCompletions via `shouldUseResponsesAPI` (respecting the
+    // user's "Responses API" switch); `useResponse: true` keeps Responses as the
+    // default. Forcing it here would override the switch and break custom
+    // endpoints/relays that only support `/chat/completions`. The decided
+    // `apiMode` is carried through by spreading the incoming payload.
     handlePayload: (payload) =>
       ({
         ...pruneUnsupportedChatCompletionParameters(payload),
-        apiMode: 'responses',
         stream: payload.stream ?? true,
       }) as any,
     useResponse: true,
