@@ -106,10 +106,15 @@ const mapResponseFormatToResponsesText = (
  * Payload handlers shared with the `supergrok` provider, which talks to the
  * same api.x.ai endpoint (authenticated via OAuth instead of an API key).
  */
+// Do NOT hardcode `apiMode: 'responses'` here. The factory already decides
+// Responses-vs-ChatCompletions via `shouldUseResponsesAPI` (respecting the
+// user's "Responses API" switch); `useResponse: true` keeps Responses as the
+// default. Forcing it here would override the switch and break custom
+// endpoints/relays that only support `/chat/completions`. The decided
+// `apiMode` is carried through by spreading the incoming payload.
 export const handleXAIChatCompletionPayload = (payload: ChatStreamPayload) =>
   ({
     ...pruneUnsupportedChatCompletionParameters(payload),
-    apiMode: 'responses',
     stream: payload.stream ?? true,
   }) as any;
 
