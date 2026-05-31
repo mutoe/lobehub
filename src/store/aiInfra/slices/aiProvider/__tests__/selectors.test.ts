@@ -320,6 +320,33 @@ describe('aiProviderSelectors', () => {
       expect(aiProviderSelectors.isProviderEnableResponseApi('openai')(state)).toBe(true);
     });
 
+    it('should return true by default for xai provider', () => {
+      const state = {
+        ...mockState,
+        aiProviderRuntimeConfig: {
+          xai: {
+            keyVaults: {},
+            settings: {},
+          },
+        },
+      };
+      expect(aiProviderSelectors.isProviderEnableResponseApi('xai')(state)).toBe(true);
+    });
+
+    it('should respect explicit false for xai provider', () => {
+      const state = {
+        ...mockState,
+        aiProviderRuntimeConfig: {
+          xai: {
+            config: { enableResponseApi: false },
+            keyVaults: {},
+            settings: {},
+          },
+        },
+      };
+      expect(aiProviderSelectors.isProviderEnableResponseApi('xai')(state)).toBe(false);
+    });
+
     it('should return false by default for non-openai provider', () => {
       const state = {
         ...mockState,
