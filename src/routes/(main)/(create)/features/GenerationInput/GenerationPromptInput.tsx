@@ -2,7 +2,7 @@
 
 import { ChatInput, ChatInputActionBar, SendButton } from '@lobehub/editor/react';
 import { createStaticStyles, Flexbox, TextArea } from '@lobehub/ui';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { ClipboardEventHandler, KeyboardEvent, ReactNode } from 'react';
 import { memo } from 'react';
 
 interface GenerationPromptInputProps {
@@ -20,6 +20,7 @@ interface GenerationPromptInputProps {
   maxRows?: number;
   minRows?: number;
   onGenerate: () => Promise<void> | void;
+  onPaste?: ClipboardEventHandler<HTMLTextAreaElement>;
   onValueChange: (value: string) => void;
   placeholder: string;
   rightActions?: ReactNode;
@@ -46,6 +47,7 @@ const GenerationPromptInput = memo<GenerationPromptInputProps>(
     value,
     onValueChange,
     onGenerate,
+    onPaste,
     placeholder,
     generateLabel,
     generatingLabel,
@@ -72,6 +74,7 @@ const GenerationPromptInput = memo<GenerationPromptInputProps>(
         value={value}
         variant={'borderless'}
         onKeyDown={handleKeyDown}
+        onPaste={onPaste}
         onChange={(e) => {
           if (disabled) return;
 
