@@ -4,7 +4,7 @@ import { Icon } from '@lobehub/ui';
 import { type TabBarProps } from '@lobehub/ui/mobile';
 import { TabBar } from '@lobehub/ui/mobile';
 import { createStaticStyles } from 'antd-style';
-import { Compass, MessageSquare, User } from 'lucide-react';
+import { Compass, ImageIcon, MessageSquare, User } from 'lucide-react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -57,6 +57,17 @@ const NavBar = memo(() => {
             navigate('/community');
           },
           title: t('tab.community'),
+        },
+        // Fork: image generation entry on mobile
+        {
+          icon: (active: boolean) => (
+            <Icon className={active ? styles.active : undefined} icon={ImageIcon} />
+          ),
+          key: SidebarTabKey.Image,
+          onClick: () => {
+            navigate('/image');
+          },
+          title: t('tab.image'),
         },
         {
           icon: (active: boolean) => (
