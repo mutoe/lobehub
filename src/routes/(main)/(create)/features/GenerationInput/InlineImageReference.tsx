@@ -1,10 +1,13 @@
 'use client';
 
-import { Flexbox } from '@lobehub/ui';
+import { Block, Flexbox } from '@lobehub/ui';
+import { Spin } from 'antd';
 import { createStaticStyles } from 'antd-style';
 import { memo, useState } from 'react';
 
-import UploadCard, { UPLOAD_CARD_SIZE, type UploadData } from './UploadCard';
+import Image from '@/libs/next/Image';
+
+import UploadCard, { UPLOAD_CARD_SIZE, uploadCardStyles, type UploadData } from './UploadCard';
 
 const STACK_OFFSET = -(UPLOAD_CARD_SIZE - 8);
 const EXPAND_OFFSET = 4;
@@ -36,10 +39,12 @@ interface InlineImageReferenceProps {
   maxFileSize?: number;
   onAdd: (data: UploadData) => void;
   onRemove: (url: string) => void;
+  /** Local preview of an in-flight upload (e.g. pasted image), shown with a spinner */
+  pendingPreviewUrl?: string | null;
 }
 
 const InlineImageReference = memo<InlineImageReferenceProps>(
-  ({ images, onAdd, onRemove, maxFileSize, maxCount = 5 }) => {
+  ({ images, onAdd, onRemove, maxFileSize, maxCount = 5, pendingPreviewUrl }) => {
     const [isHovered, setIsHovered] = useState(false);
 
     const canAddMore = images.length < maxCount;
@@ -68,6 +73,30 @@ const InlineImageReference = memo<InlineImageReferenceProps>(
             onUpload={onAdd}
           />
         ))}
+
+        {pendingPreviewUrl && (
+          <Block
+            className={uploadCardStyles.filledCard}
+            variant={'outlined'}
+            style={{
+              marginInlineStart: hasImages ? EXPAND_OFFSET : 0,
+              zIndex: images.length + 1,
+            }}
+          >
+            <div className={uploadCardStyles.filledCardInner}>
+              <Image
+                fill
+                unoptimized
+                alt=""
+                src={pendingPreviewUrl}
+                style={{ objectFit: 'cover' }}
+              />
+              <div className={uploadCardStyles.uploadOverlay}>
+                <Spin percent={'auto'} size="small" />
+              </div>
+            </div>
+          </Block>
+        )}
 
         {canAddMore &&
           (shouldCollapse ? (
