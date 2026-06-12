@@ -25,6 +25,14 @@ const MOBILE_NAV_ROUTES = new Set([
   // Fork: image / video generation pages show the tab bar too
   '/image',
   '/video',
+  // Fork: memory / resource pages show the tab bar too
+  '/memory',
+  '/memory/identities',
+  '/memory/contexts',
+  '/memory/preferences',
+  '/memory/experiences',
+  '/memory/activities',
+  '/resource',
   '/me',
 ]);
 
