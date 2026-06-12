@@ -255,6 +255,38 @@ export const sharedMainAreaChildren: RouteObject[] = [
     ),
   },
 
+  // Image generation routes (fork: enable AI painting on mobile)
+  {
+    children: [
+      {
+        element: dynamicElement(() => import('@/routes/(mobile)/image'), 'Mobile > Image'),
+        index: true,
+      },
+    ],
+    element: dynamicLayout(
+      () => import('@/routes/(mobile)/image/_layout'),
+      'Mobile > Image > Layout',
+    ),
+    errorElement: <ErrorBoundary />,
+    path: 'image',
+  },
+
+  // Video generation routes (fork: keep the image/video mode switch working)
+  {
+    children: [
+      {
+        element: dynamicElement(() => import('@/routes/(mobile)/video'), 'Mobile > Video'),
+        index: true,
+      },
+    ],
+    element: dynamicLayout(
+      () => import('@/routes/(mobile)/video/_layout'),
+      'Mobile > Video > Layout',
+    ),
+    errorElement: <ErrorBoundary />,
+    path: 'video',
+  },
+
   ...BusinessMobileRoutesWithMainLayout,
 ];
 
