@@ -22,6 +22,9 @@ const MOBILE_NAV_ROUTES = new Set([
   '/community/plugin',
   '/community/model',
   '/community/provider',
+  // Fork: image / video generation pages show the tab bar too
+  '/image',
+  '/video',
   '/me',
 ]);
 
