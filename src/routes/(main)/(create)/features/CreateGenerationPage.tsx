@@ -28,6 +28,8 @@ const dropZoneStyle: CSSProperties = {
 interface CreateGenerationPageProps {
   /** Disable the drop zone overlay/handling (e.g. model has no reference support). */
   dragDisabled?: boolean;
+  /** Fork: rendered inside the mobile layout — hide the desktop NavHeader chrome */
+  mobile?: boolean;
   /**
    * When provided, the whole creation area becomes a drag-and-drop upload zone.
    * Files dropped anywhere below the nav header are routed here.
@@ -39,7 +41,7 @@ interface CreateGenerationPageProps {
 }
 
 const CreateGenerationPage = memo<CreateGenerationPageProps>(
-  ({ path, Workspace, PromptInput, dragDisabled, onUploadFiles }) => {
+  ({ mobile, path, Workspace, PromptInput, dragDisabled, onUploadFiles }) => {
     const isPersonalPath = useMatch({ end: true, path });
     const isWorkspacePath = useMatch({ end: true, path: `/:workspaceSlug${path}` });
     const [topic] = useQueryState('topic');
@@ -67,7 +69,7 @@ const CreateGenerationPage = memo<CreateGenerationPageProps>(
                   <Flexbox
                     align={'center'}
                     justify={'center'}
-                    style={{ minHeight: 'calc(100vh - 180px)' }}
+                    style={{ minHeight: mobile ? 'calc(100dvh - 240px)' : 'calc(100vh - 180px)' }}
                     width={'100%'}
                   >
                     <PromptInput disableAnimation showTitle />
@@ -107,19 +109,21 @@ const CreateGenerationPage = memo<CreateGenerationPageProps>(
 
     return (
       <>
-        <NavHeader
-          right={<WideScreenButton />}
-          styles={{
-            center: {
-              alignItems: 'center',
-              display: 'flex',
-              justifyContent: 'center',
-              minWidth: 0,
-            },
-            left: { flex: 1, minWidth: 0 },
-            right: { flex: 1, minWidth: 0 },
-          }}
-        />
+        {!mobile && (
+          <NavHeader
+            right={<WideScreenButton />}
+            styles={{
+              center: {
+                alignItems: 'center',
+                display: 'flex',
+                justifyContent: 'center',
+                minWidth: 0,
+              },
+              left: { flex: 1, minWidth: 0 },
+              right: { flex: 1, minWidth: 0 },
+            }}
+          />
+        )}
         {onUploadFiles ? (
           <DragUploadZone
             disabled={dragDisabled}
