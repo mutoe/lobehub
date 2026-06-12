@@ -25,6 +25,7 @@ import {
   InlineImageReference,
   useImageGenerationModelNotice,
 } from '@/routes/(main)/(create)/features/GenerationInput';
+import { usePasteImageUpload } from '@/routes/(main)/(create)/features/GenerationInput/usePasteImageUpload';
 import {
   CfgSliderInput,
   DimensionControlGroup,
@@ -277,6 +278,13 @@ const PromptInput = ({ showTitle = false }: PromptInputProps) => {
     ? t('topic.visibility.existingLocked')
     : undefined;
 
+  // Fork feature: paste an image into the prompt textarea to add it as a reference image
+  const { onPaste: handlePromptPaste, pastePreviewUrl } = usePasteImageUpload({
+    disabled: !canCreate || !showInlineRef || imagePreviewUrls.length >= maxCount,
+    maxFileSize,
+    onUpload: handleAddImage,
+  });
+
   return (
     <Flexbox gap={32} width={'100%'}>
       {showTitle && <PromptTitle />}
@@ -295,7 +303,11 @@ const PromptInput = ({ showTitle = false }: PromptInputProps) => {
               images={imagePreviewUrls}
               maxCount={maxCount}
               maxFileSize={maxFileSize}
-              uploadingPreviews={uploadingPreviews}
+              uploadingPreviews={
+                // Fork feature: surface the in-flight pasted image alongside
+                // uploads triggered from the add card
+                pastePreviewUrl ? [...uploadingPreviews, pastePreviewUrl] : uploadingPreviews
+              }
               onAdd={handleAddImage}
               onRemove={handleRemoveImage}
               onUploadFiles={handleUploadFiles}
@@ -420,6 +432,7 @@ const PromptInput = ({ showTitle = false }: PromptInputProps) => {
           </>
         }
         onGenerate={handleGenerate}
+        onPaste={handlePromptPaste}
         onValueChange={setValue}
       />
     </Flexbox>
