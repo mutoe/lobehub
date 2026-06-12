@@ -2,11 +2,13 @@ import { LOBE_CHAT_CLOUD, UTM_SOURCE } from '@lobechat/business-const';
 import { DOWNLOAD_URL, OFFICIAL_URL } from '@lobechat/const';
 import {
   Book,
+  BrainCircuit,
   CircleUserRound,
   Cloudy,
   Download,
   Feather,
   FileClockIcon,
+  LibraryBig,
   Settings2,
 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -51,6 +53,25 @@ export const useCategory = () => {
       key: 'setting',
       label: t('userPanel.setting'),
       onClick: () => navigate('/me/settings'),
+    },
+    {
+      type: 'divider',
+    },
+  ];
+
+  // Fork: entries for the memory / resource pages enabled on mobile
+  const forkFeatures: CellProps[] = [
+    {
+      icon: BrainCircuit,
+      key: 'memory',
+      label: t('tab.memory'),
+      onClick: () => navigate('/memory'),
+    },
+    {
+      icon: LibraryBig,
+      key: 'resource',
+      label: t('tab.resource'),
+      onClick: () => navigate('/resource'),
     },
     {
       type: 'divider',
@@ -102,6 +123,7 @@ export const useCategory = () => {
     },
     ...(isLoginWithAuth ? profile : []),
     ...(isLoginWithAuth ? settings : []),
+    ...(isLoginWithAuth ? forkFeatures : []),
     ...(isLoginWithAuth ? businessMeCells : []),
     ...getDesktopApp,
     ...(!hideDocs ? helps : []),
