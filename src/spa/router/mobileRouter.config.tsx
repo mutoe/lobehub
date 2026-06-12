@@ -134,6 +134,14 @@ export const sharedMainAreaChildren: RouteObject[] = [
             ),
             path: 'provider',
           },
+          // Fork: skill list reachable on mobile (links from community home)
+          {
+            element: dynamicElement(
+              () => import('@/routes/(main)/community/(list)/skill'),
+              'Mobile > Discover > List > Skill',
+            ),
+            path: 'skill',
+          },
           {
             children: [
               {
@@ -199,6 +207,15 @@ export const sharedMainAreaChildren: RouteObject[] = [
               'Mobile > Discover > Detail > MCP',
             ),
             path: 'mcp/:slug',
+          },
+          // Fork: skill detail (upstream ships MobileSkillPage but never wires it)
+          {
+            element: dynamicElement(
+              () =>
+                import('@/routes/(main)/community/(detail)/skill').then((m) => m.MobileSkillPage),
+              'Mobile > Discover > Detail > Skill',
+            ),
+            path: 'skill/:slug',
           },
           {
             element: dynamicElement(
@@ -329,6 +346,99 @@ export const sharedMainAreaChildren: RouteObject[] = [
     ),
     errorElement: <ErrorBoundary />,
     path: 'video',
+  },
+
+  // Memory routes (fork: memory management on mobile — desktop pages reused
+  // under a mobile tab-row shell)
+  {
+    children: [
+      {
+        element: dynamicElement(
+          () => import('@/routes/(main)/memory/(home)'),
+          'Mobile > Memory > Home',
+        ),
+        index: true,
+      },
+      {
+        element: dynamicElement(
+          () => import('@/routes/(main)/memory/identities'),
+          'Mobile > Memory > Identities',
+        ),
+        path: 'identities',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/routes/(main)/memory/contexts'),
+          'Mobile > Memory > Contexts',
+        ),
+        path: 'contexts',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/routes/(main)/memory/preferences'),
+          'Mobile > Memory > Preferences',
+        ),
+        path: 'preferences',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/routes/(main)/memory/experiences'),
+          'Mobile > Memory > Experiences',
+        ),
+        path: 'experiences',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/routes/(main)/memory/activities'),
+          'Mobile > Memory > Activities',
+        ),
+        path: 'activities',
+      },
+    ],
+    element: dynamicLayout(
+      () => import('@/routes/(mobile)/memory/_layout'),
+      'Mobile > Memory > Layout',
+    ),
+    errorElement: <ErrorBoundary />,
+    path: 'memory',
+  },
+
+  // Resource routes (fork: resource / knowledge library on mobile)
+  {
+    children: [
+      {
+        element: dynamicElement(
+          () => import('@/routes/(main)/resource/(home)'),
+          'Mobile > Resource > Home',
+        ),
+        index: true,
+      },
+      {
+        children: [
+          {
+            element: dynamicElement(
+              () => import('@/routes/(main)/resource/library'),
+              'Mobile > Resource > Library',
+            ),
+            index: true,
+          },
+          {
+            element: dynamicElement(
+              () => import('@/routes/(main)/resource/library/[slug]'),
+              'Mobile > Resource > Library > Slug',
+            ),
+            path: ':slug',
+          },
+        ],
+        path: 'library/:id',
+      },
+    ],
+    element: dynamicLayout(
+      () => import('@/routes/(mobile)/resource/_layout'),
+      'Mobile > Resource > Layout',
+    ),
+    errorElement: <ErrorBoundary />,
+    path: 'resource',
   },
 
   ...BusinessMobileRoutesWithMainLayout,
