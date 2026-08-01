@@ -8,13 +8,13 @@ import { History, Plus } from 'lucide-react';
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router';
 
 import MobileContentLayout from '@/components/server/MobileNavLayout';
+import { TopicUrlSync, type TopicUrlSyncStore } from '@/features/Generation';
 
 import { GenerationTopicStoreProvider } from './Body/List/StoreContext';
 import TopicList from './Body/List/TopicList';
-import TopicUrlSync from './Body/List/TopicUrlSync';
 import type { GenerationLayoutCommonProps } from './types';
 
 const styles = createStaticStyles(({ css }) => ({
@@ -38,8 +38,9 @@ const styles = createStaticStyles(({ css }) => ({
  *
  * Desktop renders the topic list in the nav sidebar (NavPanelPortal), which
  * doesn't exist on mobile — so the topic history moves into a bottom sheet,
- * and the `?topic=` URL sync (TopicUrlSync, desktop-side mounted inside the
- * sidebar list) must be mounted here to keep the workspace switching working.
+ * and the `?topic=` URL sync (TopicUrlSync, mounted by the desktop layout at
+ * GenerationLayout/index.tsx) must be mounted here too, inside the route tree,
+ * to keep workspace switching working.
  */
 const MobileGenerationLayout: FC<GenerationLayoutCommonProps> = ({
   breadcrumb,
@@ -84,7 +85,7 @@ const MobileGenerationLayout: FC<GenerationLayoutCommonProps> = ({
       >
         <Outlet />
       </MobileContentLayout>
-      <TopicUrlSync />
+      <TopicUrlSync useStore={useStore as unknown as TopicUrlSyncStore} />
       <FloatingSheet
         mode="overlay"
         open={historyOpen}
