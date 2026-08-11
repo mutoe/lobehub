@@ -1958,6 +1958,54 @@ describe('LobeOpenAICompatibleFactory', () => {
         convertSpy.mockRestore();
       });
 
+      // Fork regression: the built-in "MUST use Responses API" rules are keyed on
+      // the model id, which only describes the provider's OFFICIAL endpoint. A
+      // relay behind a custom baseURL may serve the same model id over
+      // /chat/completions only, and the rule sat ABOVE the user's Responses
+      // switch — so the resulting 400 was inescapable. Observed with the default
+      // mini model `gpt-5.6-luna` on generateObject, which carries no apiMode.
+      it('should keep built-in Responses API models on chat completions when baseURL is customized', async () => {
+        const LobeMockOpenAI = createOpenAICompatibleRuntime({
+          baseURL: 'https://api.openai.com/v1',
+          provider: ModelProvider.OpenAI,
+        });
+
+        const inst = new LobeMockOpenAI({
+          apiKey: 'test',
+          baseURL: 'https://relay.example.com/v1',
+        });
+        const chatSpy = vi
+          .spyOn(inst['client'].chat.completions, 'create')
+          .mockResolvedValue(new ReadableStream() as any);
+        const responsesSpy = vi.spyOn(inst['client'].responses, 'create');
+
+        await inst.chat({ messages: [{ content: 'hi', role: 'user' }], model: 'gpt-5.6-luna' });
+
+        expect(responsesSpy).not.toHaveBeenCalled();
+        expect(chatSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ model: 'gpt-5.6-luna' }),
+          expect.anything(),
+        );
+      });
+
+      it('should still force Responses API for built-in models on the provider default endpoint', async () => {
+        const LobeMockOpenAI = createOpenAICompatibleRuntime({
+          baseURL: 'https://api.openai.com/v1',
+          provider: ModelProvider.OpenAI,
+        });
+
+        const inst = new LobeMockOpenAI({ apiKey: 'test' });
+        const chatSpy = vi.spyOn(inst['client'].chat.completions, 'create');
+        const responsesSpy = vi
+          .spyOn(inst['client'].responses, 'create')
+          .mockResolvedValue(new ReadableStream() as any);
+
+        await inst.chat({ messages: [{ content: 'hi', role: 'user' }], model: 'gpt-5.6-luna' });
+
+        expect(chatSpy).not.toHaveBeenCalled();
+        expect(responsesSpy).toHaveBeenCalled();
+      });
+
       it('should keep OpenRouter OpenAI slugs on chat completions for provider payload normalization', async () => {
         const LobeMockOpenRouter = createOpenAICompatibleRuntime({
           baseURL: 'https://openrouter.ai/api/v1',
