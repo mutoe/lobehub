@@ -497,11 +497,39 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
 
       const log = debug(`${this.logPrefix}:shouldUseResponsesAPI`);
 
-      // Priority 0: Check built-in Responses API model rules FIRST (highest priority)
-      // These models MUST use Responses API regardless of user settings.
+      // Priority 0: built-in Responses API model rules.
+      //
+      // Fork: these rules describe the provider's OFFICIAL endpoint — "OpenAI
+      // serves o3-pro / gpt-5.2+ only over /v1/responses". They are keyed on the
+      // model id alone, which stops being a safe proxy the moment the user points
+      // the provider at their own baseURL: relays and self-hosted gateways
+      // routinely expose the same model ids over /chat/completions only, and
+      // forcing /v1/responses there is a hard 400 that NO user setting can
+      // escape — this check sits above the user's "Responses API" switch.
+      //
+      // Background system-agent work is hit worst: generateObject (satisfaction
+      // judging, prompt rewriting, …) never carries an apiMode signal at all, so
+      // on a custom endpoint it had no way out. Observed with the default mini
+      // model `gpt-5.6-luna` (minorVersion 6 ≥ 2 ⇒ isResponsesAPIModel) against a
+      // relay that only implements /chat/completions.
+      //
+      // So apply the built-in rules only when we are actually talking to the
+      // provider's own endpoint. On a custom baseURL, fall through to the normal
+      // priority chain (user switch → explicit flags → model patterns), which
+      // still lets anyone opt back in via the switch or `useResponse`.
+      const isProviderDefaultEndpoint = this.baseURL === DEFAULT_BASE_URL;
+
       if (model && isResponsesAPIModel(model)) {
-        log('using Responses API: model %s matches built-in Responses API model rules', model);
-        return true;
+        if (isProviderDefaultEndpoint) {
+          log('using Responses API: model %s matches built-in Responses API model rules', model);
+          return true;
+        }
+
+        log(
+          'skipping built-in Responses API rule for model %s: custom baseURL %s may not implement /v1/responses',
+          model,
+          this.baseURL,
+        );
       }
 
       // Priority 1: userApiMode is explicitly set to 'chatCompletion' (user disabled the switch)
