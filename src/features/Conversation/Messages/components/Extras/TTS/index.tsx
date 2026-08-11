@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { Md5 } from 'ts-md5';
 
 import { contextSelectors, useConversationStore } from '@/features/Conversation/store';
+import { useTTSVoiceIdentity } from '@/hooks/useTTSRuntimeConfig';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
 
@@ -13,7 +14,10 @@ const TTS = memo<TTSProps>(
   (props) => {
     const { file, voice, content, contentMd5 } = props;
     const agentId = useConversationStore(contextSelectors.agentId);
-    const currentVoice = useAgentStore(agentByIdSelectors.getAgentTTSVoiceById(agentId));
+    const agentVoice = useAgentStore(agentByIdSelectors.getAgentTTSVoiceById(agentId));
+    // Fork: the identity carries the speech service too, so switching to Fish Audio
+    // regenerates audio that was cached back when OpenAI was speaking.
+    const currentVoice = useTTSVoiceIdentity(agentVoice);
 
     const md5 = useMemo(() => Md5.hashStr(content).toString(), [content]);
 
