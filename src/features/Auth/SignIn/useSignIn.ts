@@ -349,7 +349,7 @@ export const useSignIn = () => {
       const { error } = await multiSession.setActive({ sessionToken: account.sessionToken });
       if (error) {
         // Session may have been revoked or expired on server — drop it from the list
-        message.error(error.message || t('betterAuth.signin.error'));
+        toast.error(error.message || t('betterAuth.signin.error'));
         await multiSession.revoke({ sessionToken: account.sessionToken }).catch(() => undefined);
         await refreshRecentAccounts();
         return;
@@ -358,7 +358,7 @@ export const useSignIn = () => {
       window.location.href = callbackUrl;
     } catch (error) {
       console.error('Switch account error:', error);
-      message.error(t('betterAuth.signin.error'));
+      toast.error(t('betterAuth.signin.error'));
     } finally {
       setLoading(false);
     }

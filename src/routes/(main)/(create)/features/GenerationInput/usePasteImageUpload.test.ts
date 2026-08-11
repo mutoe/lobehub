@@ -6,15 +6,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePasteImageUpload } from './usePasteImageUpload';
 
 const uploadWithProgress = vi.fn();
-const messageError = vi.fn();
+const toastError = vi.fn();
 
 vi.mock('@/store/file', () => ({
   useFileStore: (selector: any) => selector({ uploadWithProgress }),
 }));
 
-vi.mock('@/components/AntdStaticMethods', () => ({
-  message: {
-    error: (...args: any[]) => messageError(...args),
+vi.mock('@lobehub/ui/base-ui', () => ({
+  toast: {
+    error: (...args: any[]) => toastError(...args),
   },
 }));
 
@@ -152,7 +152,7 @@ describe('usePasteImageUpload', () => {
     });
 
     await waitFor(() => {
-      expect(messageError).toHaveBeenCalled();
+      expect(toastError).toHaveBeenCalled();
     });
     expect(onUpload).not.toHaveBeenCalled();
     expect(result.current.pastePreviewUrl).toBeNull();
