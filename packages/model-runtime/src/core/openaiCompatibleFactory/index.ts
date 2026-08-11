@@ -45,6 +45,7 @@ import type {
   HandleCreateVideoWebhookResult,
   PollVideoStatusResult,
 } from '../../types/video';
+import { attachRawErrorBody } from '../../utils/attachRawErrorBody';
 import { AgentRuntimeError } from '../../utils/createError';
 import { debugPayload, debugResponse, debugStream } from '../../utils/debugStream';
 import { desensitizeUrl } from '../../utils/desensitizeUrl';
@@ -389,6 +390,10 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
       } else {
         this.client = new OpenAI(initOptions);
       }
+
+      // Fork: relays that answer `{"message": "..."}` instead of `{"error": {...}}`
+      // otherwise surface as `400 status code (no body)`. See attachRawErrorBody.
+      attachRawErrorBody(this.client);
 
       this.baseURL = baseURL || this.client.baseURL;
 
@@ -740,6 +745,9 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
           } else {
             this.client = new OpenAI(initOptions);
           }
+
+          // Fork: re-apply on the rebuilt client (see attachRawErrorBody).
+          attachRawErrorBody(this.client);
 
           this.baseURL = targetBaseURL;
         }
