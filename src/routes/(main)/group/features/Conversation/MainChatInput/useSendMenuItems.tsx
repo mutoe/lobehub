@@ -7,6 +7,7 @@ import { BotMessageSquare, LucideCheck, MessageSquarePlus } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
+import { useStreamingToggleMenuItem } from '@/features/ChatInput/hooks/useStreamingToggleMenuItem';
 import { useConversationStore, useConversationStoreApi } from '@/features/Conversation';
 import { useUserStore } from '@/store/user';
 import { preferenceSelectors, settingsSelectors } from '@/store/user/selectors';
@@ -31,6 +32,9 @@ export const useSendMenuItems = (): MenuProps['items'] => {
   ]);
 
   const hotkey = useUserStore(settingsSelectors.getHotkeyById(HotkeyEnum.AddUserMessage));
+
+  // Fork: streaming-output toggle (see useStreamingToggleMenuItem).
+  const streamingToggleItem = useStreamingToggleMenuItem();
 
   const handleAddAIMessage = useCallback(() => {
     const store = storeApi.getState();
@@ -93,6 +97,8 @@ export const useSendMenuItems = (): MenuProps['items'] => {
         },
       },
       { type: 'divider' },
+      streamingToggleItem,
+      { type: 'divider' },
       {
         icon: <Icon icon={BotMessageSquare} />,
         key: 'addAi',
@@ -111,6 +117,14 @@ export const useSendMenuItems = (): MenuProps['items'] => {
         onClick: handleAddUserMessage,
       },
     ],
-    [useCmdEnterToSend, updatePreference, hotkey, handleAddAIMessage, handleAddUserMessage],
+    [
+      useCmdEnterToSend,
+      updatePreference,
+      hotkey,
+      handleAddAIMessage,
+      handleAddUserMessage,
+      streamingToggleItem,
+      t,
+    ],
   );
 };
