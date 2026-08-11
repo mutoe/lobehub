@@ -7,7 +7,7 @@ import SettingHeader from '@/features/Settings/features/SettingHeader';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 import Image from '../image/features/Image';
-import OpenAI from '../tts/features/OpenAI';
+import TextToSpeech from '../tts/features/TextToSpeech';
 
 interface PageProps {
   showSettingHeader?: boolean;
@@ -20,7 +20,7 @@ const Page = ({ showSettingHeader = true }: PageProps) => {
     <>
       {showSettingHeader && <SettingHeader title={t('tab.serviceModel')} />}
       <ModelAssignmentsForm />
-      {enableSTT && <OpenAI />}
+      {enableSTT && <TextToSpeech />}
       {showAiImage && <Image />}
     </>
   );
