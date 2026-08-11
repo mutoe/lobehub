@@ -1,10 +1,10 @@
 'use client';
 
+import { toast } from '@lobehub/ui/base-ui';
 import type { ClipboardEvent } from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { message } from '@/components/AntdStaticMethods';
 import { useFileStore } from '@/store/file';
 
 import type { UploadData } from './UploadCard';
@@ -64,7 +64,7 @@ export const usePasteImageUpload = ({
           }
         } catch (error) {
           console.error('Paste image upload failed:', error);
-          message.error(t('upload.uploadFailed'));
+          toast.error(t('upload.uploadFailed'));
         } finally {
           URL.revokeObjectURL(previewUrl);
           setPastePreviewUrl(null);
