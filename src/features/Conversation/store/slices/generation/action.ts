@@ -10,6 +10,7 @@ import type {
   ChatTopic,
   ConversationContext,
   HeterogeneousProviderConfig,
+  LobeAgentChatConfig,
 } from '@lobechat/types';
 import { applyTopicModelToHeterogeneousProvider, resolveAgentAgencyConfig } from '@lobechat/types';
 import { toast } from '@lobehub/ui';
@@ -389,6 +390,21 @@ interface RegenerateUserMessageSource {
   readDbMessages: () => ConversationStore['dbMessages'];
 }
 
+/**
+ * Fork feature: per-run chatConfig overrides for a single regenerate.
+ *
+ * Rides the existing `executeClientAgent({ chatConfigOverride })` channel
+ * (added upstream for sub-agents), so nothing below this layer needs to know
+ * about it. Used by the empty-completion error card to retry once with
+ * `enableStreaming: false` — some relays swallow moderation/upstream errors in
+ * streaming mode (HTTP 200 + a bare `data: [DONE]`) but report them properly on
+ * the non-streaming endpoint, so a non-streaming retry is the only way to
+ * surface the real reason.
+ */
+export interface RegenerateUserMessageOptions {
+  chatConfigOverride?: Partial<LobeAgentChatConfig>;
+}
+
 const captureRegenerateUserMessageSource = (
   get: () => ConversationStore,
 ): RegenerateUserMessageSource => {
@@ -411,6 +427,7 @@ const captureRegenerateUserMessageSource = (
 const regenerateUserMessageFromSource = async (
   messageId: string,
   source: RegenerateUserMessageSource,
+  options?: RegenerateUserMessageOptions,
 ) => {
   const { context, displayMessages, hooks, readDbMessages } = source;
   const chatStore = useChatStore.getState();
@@ -564,6 +581,9 @@ const regenerateUserMessageFromSource = async (
 
     // ── Client mode: run agent locally ──
     await chatStore.executeClientAgent({
+      // Fork: per-run chatConfig override (see RegenerateUserMessageOptions).
+      // Undefined for every ordinary regenerate, so behavior is unchanged.
+      chatConfigOverride: options?.chatConfigOverride,
       context,
       initialContext,
       messages: contextMessages,
@@ -819,7 +839,11 @@ export interface GenerationAction {
    * Regenerate a user message. With `edit`, resend an edited Codex prompt in a
    * branched topic instead (see {@link editCodexUserMessage}).
    */
-  regenerateUserMessage: (messageId: string, edit?: CodexMessageEdit) => Promise<void>;
+  regenerateUserMessage: (
+    messageId: string,
+    edit?: CodexMessageEdit,
+    options?: RegenerateUserMessageOptions,
+  ) => Promise<void>;
 
   /**
    * Resend a thread message
@@ -1433,10 +1457,14 @@ export const generationSlice: StateCreator<
     await get().regenerateUserMessage(userId);
   },
 
-  regenerateUserMessage: async (messageId: string, edit?: CodexMessageEdit) => {
+  regenerateUserMessage: async (
+    messageId: string,
+    edit?: CodexMessageEdit,
+    options?: RegenerateUserMessageOptions,
+  ) => {
     const source = captureRegenerateUserMessageSource(get);
     if (edit) return editCodexUserMessage(messageId, source, edit);
-    return regenerateUserMessageFromSource(messageId, source);
+    return regenerateUserMessageFromSource(messageId, source, options);
   },
 
   resendThreadMessage: async (messageId: string) => {
