@@ -35,7 +35,21 @@ describe('useRetryParentMessage', () => {
     });
 
     expect(result.current.disabled).toBe(false);
-    expect(storeMock.regenerateUserMessage).toHaveBeenCalledWith('user-message');
+    expect(storeMock.regenerateUserMessage).toHaveBeenCalledWith('user-message', undefined);
+  });
+
+  it('should forward chatConfig overrides to the regeneration', async () => {
+    const { result } = renderHook(() => useRetryParentMessage('assistant-message'));
+
+    await act(async () => {
+      await result.current.retryParentMessage(undefined, {
+        chatConfigOverride: { enableStreaming: false },
+      });
+    });
+
+    expect(storeMock.regenerateUserMessage).toHaveBeenCalledWith('user-message', {
+      chatConfigOverride: { enableStreaming: false },
+    });
   });
 
   it('should run the pre-retry action before regenerating the parent message', async () => {

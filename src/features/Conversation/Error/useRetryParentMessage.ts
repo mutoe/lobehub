@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { useConversationStore } from '@/features/Conversation/store';
+import type { RegenerateUserMessageOptions } from '@/features/Conversation/store/slices/generation/action';
 
 type BeforeRetry = () => Promise<void> | void;
 
@@ -13,13 +14,13 @@ export const useRetryParentMessage = (id: string) => {
   );
 
   const retryParentMessage = useCallback(
-    async (beforeRetry?: BeforeRetry) => {
+    async (beforeRetry?: BeforeRetry, options?: RegenerateUserMessageOptions) => {
       if (!parentId) return;
 
       setLoading(true);
       try {
         await beforeRetry?.();
-        await regenerateUserMessage(parentId);
+        await regenerateUserMessage(parentId, options);
       } finally {
         setLoading(false);
       }
