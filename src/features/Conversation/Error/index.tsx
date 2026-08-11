@@ -91,6 +91,12 @@ const ExceededContextWindowError = dynamic(() => import('./ExceededContextWindow
   ssr: false,
 });
 
+// Fork: extra action offered on empty completions — relays that swallow
+// upstream errors in streaming mode still report them without streaming.
+const RetryWithoutStreamingButton = dynamic(() => import('./RetryWithoutStreamingButton'), {
+  ssr: false,
+});
+
 const OllamaBizError = dynamic(() => import('./OllamaBizError'), { loading, ssr: false });
 
 const OllamaSetupGuide = dynamic(() => import('./OllamaSetupGuide'), {
@@ -512,6 +518,11 @@ const ErrorMessageExtra = memo<ErrorExtraProps>(
             </Highlighter>
           ) : undefined,
         }}
+        extraAction={
+          error?.type === AgentRuntimeErrorType.ModelEmptyCompletion ? (
+            <RetryWithoutStreamingButton id={data.id} />
+          ) : undefined
+        }
         onRegenerate={canRetry ? handleManualRetry : undefined}
       />
     );

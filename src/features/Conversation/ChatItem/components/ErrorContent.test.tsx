@@ -23,6 +23,7 @@ vi.mock('@lobehub/ui', () => ({
       {action}
     </div>
   ),
+  Flexbox: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   Skeleton: { Button: () => <div>loading</div> },
 }));
 
@@ -98,5 +99,37 @@ describe('ErrorContent dismiss behavior', () => {
 
     expect(button).not.toBeDisabled();
     expect(button).not.toHaveAttribute('aria-busy');
+  });
+
+  // Fork: `extraAction` lets a specific error type offer a more targeted
+  // recovery (the non-streaming retry on empty completions) without replacing
+  // the stock card — the provider diagnostics must stay on screen.
+  it('renders extraAction alongside the regenerate button', () => {
+    messageContent = '';
+    render(
+      <ErrorContent
+        error={{ message: 'boom' } as any}
+        extraAction={<button type="button">retry without streaming</button>}
+        id="msg-1"
+        onRegenerate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /regenerate/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry without streaming/i })).toBeInTheDocument();
+  });
+
+  it('renders extraAction on its own when regeneration is unavailable', () => {
+    messageContent = '';
+    render(
+      <ErrorContent
+        error={{ message: 'boom' } as any}
+        extraAction={<button type="button">retry without streaming</button>}
+        id="msg-1"
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: /regenerate/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry without streaming/i })).toBeInTheDocument();
   });
 });
