@@ -1375,6 +1375,16 @@ export default {
   'settingSystemTools.tools.qwen.desc': 'Qwen Code - Alibaba Qwen agentic coding CLI',
   'settingSystemTools.tools.rg.desc': 'ripgrep - extremely fast text search tool',
   'settingSystemTools.tools.uv.desc': 'uv - extremely fast Python package manager',
+  'settingTTS.fishAudio.apiKey.desc':
+    'Leave empty to use the key configured on the server (FISH_AUDIO_API_KEY)',
+  'settingTTS.fishAudio.apiKey.placeholder': 'sk-...',
+  'settingTTS.fishAudio.apiKey.title': 'Fish Audio API Key',
+  'settingTTS.fishAudio.referenceId.desc':
+    'The voice id from fish.audio. Leave empty to use the default voice',
+  'settingTTS.fishAudio.referenceId.invalid':
+    'A voice id is 1–128 characters of letters, digits, underscore or hyphen',
+  'settingTTS.fishAudio.referenceId.placeholder': 'e.g. 7cc066528f1a4cfb97de0190fb0c025f',
+  'settingTTS.fishAudio.referenceId.title': 'Fish Audio Voice ID',
   'settingTTS.openai.sttModel': 'OpenAI Speech-to-Text Model',
   'settingTTS.openai.title': 'OpenAI',
   'settingTTS.openai.ttsModel': 'OpenAI Text-to-Speech Model',

@@ -129,12 +129,14 @@ exports[`settingsSelectors > currentSystemAgent > should merge DEFAULT_SYSTEM_AG
 
 exports[`settingsSelectors > currentTTS > should merge DEFAULT_TTS_CONFIG and s.settings.tts correctly 1`] = `
 {
+  "fishAudio": {},
   "openAI": {
     "sttModel": "whisper-2",
     "ttsModel": "tts-1",
   },
   "sttAutoStop": false,
   "sttServer": "openai",
+  "ttsService": "openai",
 }
 `;
 
