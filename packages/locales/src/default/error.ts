@@ -97,6 +97,11 @@ export default {
     'We apologize, the server timed out while waiting for a response, possibly due to a slow reply. Please try again later.',
   'response.CreateMessageError':
     'Sorry, the message could not be sent successfully. Please copy the content and try sending it again. This message will not be retained after refreshing the page.',
+  'emptyCompletion.desc':
+    'The provider finished the request without returning any content. Some relays hide the real reason (content moderation, quota, channel errors) in streaming mode — retrying without streaming usually surfaces it.',
+  'emptyCompletion.retryWithoutStreaming': 'Retry without streaming',
+  'emptyCompletion.title': 'Empty response from provider',
+
   'exceededContext.compact': 'Compact Context',
   'exceededContext.desc':
     'The conversation has exceeded the context window limit. You can compact the context to compress history and continue chatting.',
