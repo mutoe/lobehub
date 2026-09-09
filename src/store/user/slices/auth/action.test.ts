@@ -19,6 +19,10 @@ const mockBetterAuthClient = vi.hoisted(() => ({
   listAccounts: vi.fn().mockResolvedValue({ data: [] }),
   accountInfo: vi.fn().mockResolvedValue({ data: { user: {} } }),
   signOut: vi.fn().mockResolvedValue({}),
+  // fork（零密码切换账号）：logout 会先用 getSession 拿当前 token 走 multiSession.revoke，
+  // 只有拿不到 token 才回落到 signOut。这里返回空 session，让上游用例继续覆盖 signOut 路径。
+  getSession: vi.fn().mockResolvedValue({ data: null }),
+  multiSession: { revoke: vi.fn().mockResolvedValue({}) },
 }));
 
 vi.mock('@/libs/better-auth/auth-client', () => mockBetterAuthClient);
