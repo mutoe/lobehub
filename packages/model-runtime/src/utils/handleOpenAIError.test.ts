@@ -165,4 +165,52 @@ describe('handleOpenAIError', () => {
       });
     });
   });
+  describe('serializable diagnostics (fork)', () => {
+    // `JSON.stringify(new Error('x'))` is `'{}'` — message/name/stack are all
+    // non-enumerable. APIConnectionError parks the real failure (fetch failed,
+    // terminated, connect timeout) in `cause`, so handing that Error straight
+    // back as `errorResult` erases the only useful diagnostic before it reaches
+    // the UI: the surfaced payload becomes a bare `{}`.
+    it('keeps the underlying reason when an APIError carries an Error cause', () => {
+      const cause = Object.assign(new TypeError('fetch failed'), {
+        code: 'UND_ERR_CONNECT_TIMEOUT',
+      });
+      const connectionError = new OpenAI.APIConnectionError({ cause });
+
+      const result = handleOpenAIError(connectionError);
+
+      // The assertion must run on the SERIALIZED payload: that is what the UI
+      // receives, and it is where a bare Error collapses into `{}`.
+      const serialized = JSON.stringify(result.errorResult);
+      expect(serialized).toContain('fetch failed');
+      expect(serialized).toContain('UND_ERR_CONNECT_TIMEOUT');
+    });
+
+    it('keeps the underlying reason when an APIError carries an Error in `error`', () => {
+      const apiError = new OpenAI.APIError(500, null as any, 'boom', undefined);
+      (apiError as any).error = new Error('relay exploded');
+
+      const result = handleOpenAIError(apiError);
+
+      expect(JSON.stringify(result.errorResult)).toContain('relay exploded');
+    });
+
+    it('unwraps a nested Error cause on a plain Error', () => {
+      const err = new Error('outer');
+      (err as any).cause = new Error('inner reason');
+
+      const result = handleOpenAIError(err);
+
+      expect(JSON.stringify(result.errorResult)).toContain('inner reason');
+    });
+
+    // Plain-object causes and standard error bodies must survive untouched.
+    it('leaves non-Error results unchanged', () => {
+      const cause = { code: 'ECONNRESET', message: 'Network error' };
+      const apiError = new OpenAI.APIError(472, null as any, 'test-message', undefined);
+      (apiError as any).cause = cause;
+
+      expect(handleOpenAIError(apiError).errorResult).toEqual(cause);
+    });
+  });
 });
