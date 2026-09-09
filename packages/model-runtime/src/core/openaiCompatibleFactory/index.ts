@@ -57,6 +57,7 @@ import type { ModelIdMappingOptions } from '../../utils/modelIdMapping';
 import { resolveMappedModelId, withMappedModelId } from '../../utils/modelIdMapping';
 import { detectModelProvider } from '../../utils/modelParse';
 import { postProcessModelList } from '../../utils/postProcessModelList';
+import { downgradeDeveloperRoleForRelay } from '../../utils/relayResponseInputCompat';
 import {
   assertContextWithinWindow,
   type AssertContextWithinWindowOptions,
@@ -1639,13 +1640,20 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
         'responses',
       );
 
-      const input = await convertOpenAIResponseInputs(messages as any, {
+      let input = await convertOpenAIResponseInputs(messages as any, {
         forceImageBase64: chatCompletion?.forceImageBase64,
         forceVideoBase64: chatCompletion?.forceVideoBase64,
         provider: this.id,
         reasoningSignatureScope,
         strictToolPairing: true,
       });
+
+      // Fork: relays commonly reject the Responses API `developer` role — geekai.co
+      // answers 200 with an empty body — so downgrade it to `user` off the provider's
+      // own endpoint. See relayResponseInputCompat.
+      if (this.baseURL !== DEFAULT_BASE_URL) {
+        input = downgradeDeveloperRoleForRelay(input);
+      }
 
       const isStreaming = payload.stream !== false;
       log(
