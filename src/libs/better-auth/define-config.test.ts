@@ -53,6 +53,8 @@ vi.mock('better-auth/plugins', () => ({
   emailOTP: vi.fn(() => ({ id: 'email-otp' })),
   genericOAuth: vi.fn(() => ({ id: 'generic-oauth' })),
   magicLink: vi.fn(() => ({ id: 'magic-link' })),
+  // fork（零密码切换账号）：defineConfig 额外注册了 multiSession plugin
+  multiSession: vi.fn(() => ({ id: 'multi-session' })),
 }));
 
 vi.mock('undici', () => ({
