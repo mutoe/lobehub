@@ -2034,6 +2034,69 @@ describe('LobeOpenAICompatibleFactory', () => {
         expect(responsesSpy).toHaveBeenCalled();
       });
 
+      // Fork regression: the Responses API spec renamed `system` to `developer`, and
+      // convertOpenAIResponseInputs rewrites every system message accordingly. Relays
+      // routinely do not implement that role. Observed with geekai.co: a request whose
+      // input carries a `developer` item comes back HTTP 200 with a COMPLETELY EMPTY
+      // body — no events, no error — so the UI reports "empty response" with nothing to
+      // go on. Verified by alternating 3 rounds 25s apart: user role 18/14/14 deltas,
+      // developer role 0/0/0.
+      it('should downgrade the developer role to user when baseURL is customized', async () => {
+        const LobeMockOpenAI = createOpenAICompatibleRuntime({
+          baseURL: 'https://api.openai.com/v1',
+          provider: ModelProvider.OpenAI,
+        });
+
+        const inst = new LobeMockOpenAI({
+          apiKey: 'test',
+          baseURL: 'https://relay.example.com/v1',
+        });
+        const responsesSpy = vi
+          .spyOn(inst['client'].responses, 'create')
+          .mockResolvedValue(new ReadableStream() as any);
+
+        await inst.chat({
+          apiMode: 'responses',
+          messages: [
+            { content: 'You are helpful.', role: 'system' },
+            { content: 'hi', role: 'user' },
+          ],
+          model: 'gpt-4o',
+        } as any);
+
+        expect(responsesSpy).toHaveBeenCalled();
+        const input = (responsesSpy.mock.calls[0][0] as any).input;
+        const roles = input.map((item: any) => item.role);
+        expect(roles).not.toContain('developer');
+        // The system prompt must survive as content, just under a role the relay accepts.
+        expect(input.find((i: any) => i.content === 'You are helpful.')?.role).toBe('user');
+      });
+
+      it('should keep the developer role on the provider default endpoint', async () => {
+        const LobeMockOpenAI = createOpenAICompatibleRuntime({
+          baseURL: 'https://api.openai.com/v1',
+          provider: ModelProvider.OpenAI,
+        });
+
+        const inst = new LobeMockOpenAI({ apiKey: 'test' });
+        const responsesSpy = vi
+          .spyOn(inst['client'].responses, 'create')
+          .mockResolvedValue(new ReadableStream() as any);
+
+        await inst.chat({
+          apiMode: 'responses',
+          messages: [
+            { content: 'You are helpful.', role: 'system' },
+            { content: 'hi', role: 'user' },
+          ],
+          model: 'gpt-4o',
+        } as any);
+
+        expect(responsesSpy).toHaveBeenCalled();
+        const roles = (responsesSpy.mock.calls[0][0] as any).input.map((i: any) => i.role);
+        expect(roles).toContain('developer');
+      });
+
       it('should keep OpenRouter OpenAI slugs on chat completions for provider payload normalization', async () => {
         const LobeMockOpenRouter = createOpenAICompatibleRuntime({
           baseURL: 'https://openrouter.ai/api/v1',
