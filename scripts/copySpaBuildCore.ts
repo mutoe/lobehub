@@ -9,6 +9,15 @@ const copyDirs = ['assets', 'devtools', 'i18n', 'model-bank', 'shiki', 'vendor']
 // directory — a single copy behind a single path.
 const rootCopyDirs = ['app-workers'] as const;
 const copyRootFilePatterns = [/^favicon.*\.ico$/, /^apple-touch-icon\.png$/] as const;
+
+// Files that must land in `public/` itself rather than under the SPA prefix,
+// keyed by the dist dir they come from. The service worker is the only one: a
+// SW can only control URLs beneath its own path, so `/_spa/sw.js` would own
+// nothing the user navigates to. Mobile-only, matching the VitePWA block in
+// vite.config.ts — one scope can only have one active service worker.
+const siteRootFilePatterns: Record<string, readonly RegExp[]> = {
+  mobile: [/^sw\.js$/],
+};
 const targets = [
   { distDir: 'desktop', publicDir: 'public/_spa' },
   { distDir: 'mobile', publicDir: 'public/_spa' },
@@ -52,6 +61,13 @@ export const copySpaBuild = (root = path.resolve(import.meta.dirname, '..')) => 
       const sourceFile = path.resolve(distRoot, file);
 
       if (!statSync(sourceFile).isFile()) continue;
+
+      if ((siteRootFilePatterns[distDir] ?? []).some((pattern) => pattern.test(file))) {
+        cpSync(sourceFile, path.resolve(root, 'public', file));
+        console.log(`Copied dist/${distDir}/${file} -> public/${file}`);
+        continue;
+      }
+
       if (!copyRootFilePatterns.some((pattern) => pattern.test(file))) continue;
 
       cpSync(sourceFile, path.resolve(spaDir, file));
