@@ -3,7 +3,7 @@ import qs from 'query-string';
 
 import { getCanonicalUrl } from '@/server/utils/url';
 
-import { shareTarget, shortcuts } from './pwaCapabilities';
+import { getShortcuts, shareTarget } from './pwaCapabilities';
 
 const MAX_AGE = 31_536_000;
 const COLOR = '#000000';
@@ -29,12 +29,15 @@ export class Manifest {
     name,
     id,
     icons,
+    // Fork: manifest text (shortcuts, lang) follows the requesting user's locale
+    locale = 'en-US',
     screenshots,
   }: {
     color?: string;
     description: string;
     icons: IconItem[];
     id: string;
+    locale?: string;
     name: string;
     screenshots: ScreenshotItem[];
   }) {
@@ -52,9 +55,10 @@ export class Manifest {
       icons: icons.map((item) => this._getIcon(item)),
       id,
       immutable: 'true',
+      lang: locale,
       max_age: MAX_AGE,
       name,
-      orientation: 'portrait',
+      // Fork: no `orientation` lock — an installed PWA may rotate on tablets
       related_applications: [
         {
           platform: 'webapp',
@@ -65,7 +69,7 @@ export class Manifest {
       screenshots: screenshots.map((item) => this._getScreenshot(item)),
       share_target: shareTarget,
       short_name: name,
-      shortcuts,
+      shortcuts: getShortcuts(locale),
       splash_pages: null,
       start_url: '/',
       tab_strip: {

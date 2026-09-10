@@ -172,26 +172,33 @@ describe('PWA app-like capabilities', () => {
   };
 
   describe('share_target', () => {
-    it('registers the app in the OS share sheet via a GET share target', () => {
+    it('registers the app in the OS share sheet as a multipart POST target', () => {
       const result = manifest.generate(baseInput) as any;
 
       expect(result.share_target).toEqual({
         action: '/agent/inbox',
-        method: 'GET',
+        enctype: 'multipart/form-data',
+        method: 'POST',
         params: {
+          files: [{ accept: ['image/*'], name: 'files' }],
           text: 'share_text',
           title: 'share_title',
           url: 'share_url',
         },
       });
     });
+  });
 
-    it('uses GET so the shared payload arrives as query params the SPA can read', () => {
-      const result = manifest.generate(baseInput) as any;
+  describe('locale', () => {
+    it('renders shortcut labels in the requested locale', () => {
+      const result = manifest.generate({ ...baseInput, locale: 'zh-CN' }) as any;
 
-      // A POST target would need a service-worker fetch handler to intercept the
-      // multipart body; GET keeps the whole flow inside the SPA router.
-      expect(result.share_target.method).toBe('GET');
+      expect(result.lang).toBe('zh-CN');
+      expect(result.shortcuts[0].name).toBe('新对话');
+    });
+
+    it('does not lock orientation', () => {
+      expect((manifest.generate(baseInput) as any).orientation).toBeUndefined();
     });
   });
 
