@@ -2,14 +2,24 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="shortcut icon" href="/favicon-32x32.ico" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#f8f8f8" />
     <!--SEO_META-->
     <style>
       html body {
+        /* viewport-fit=cover lets the page paint under the system bars, so the
+           insets have to come back as padding or the header and the composer
+           end up beneath the status bar and the gesture pill. Putting them on
+           body keeps every screen correct with one rule: global.ts pins body to
+           100dvh and antd's reset makes it border-box, so the whole tree
+           shrinks to the safe area and the padding shows body's own
+           background — which already follows the theme. */
+        box-sizing: border-box;
+        padding-block: env(safe-area-inset-top) env(safe-area-inset-bottom);
         background: #f8f8f8;
       }
       html[data-theme='dark'] body {
@@ -44,6 +54,13 @@
         var resolvedTheme = theme === 'system' ? systemTheme : theme;
         if (resolvedTheme === 'dark' || resolvedTheme === 'light') {
           document.documentElement.setAttribute('data-theme', resolvedTheme);
+        }
+
+        // Match the boot background above; features/PWA/themeColor takes over
+        // once the bundle is running.
+        var themeColorMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeColorMeta) {
+          themeColorMeta.setAttribute('content', resolvedTheme === 'dark' ? '#000000' : '#f8f8f8');
         }
 
         var hl = new URLSearchParams(location.search).get('hl');
