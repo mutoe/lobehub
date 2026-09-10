@@ -15,7 +15,6 @@ import {
   sharedModulePreload,
   sharedOptimizeDeps,
   sharedPwaGlobIgnores,
-  sharedPwaRuntimeCaching,
   sharedRendererDedupe,
   sharedRendererDefine,
   sharedRendererPlugins,
@@ -291,14 +290,10 @@ export default defineConfig({
     // cold-start/offline win matters: the installed mobile PWA.
     isMobile &&
       VitePWA({
-        injectRegister: null,
-        manifest: false,
-        registerType: 'prompt',
-        workbox: {
-          // Single self-contained file: the SW is copied to the site root while
-          // its siblings stay under `/_spa/`, so a separate workbox runtime
-          // chunk would be fetched from a path that does not exist.
-          inlineWorkboxRuntime: true,
+        // Source in src/features/PWA/sw; the build emits `sw.js` next to the
+        // bundle and scripts/copySpaBuildCore.ts lifts it to the site root.
+        filename: 'sw.ts',
+        injectManifest: {
           // Upstream excludes i18n and shiki wholesale; drop those two rules so
           // `pwaPrecacheAllowlist` can let a curated subset back in (the
           // installed locale + the handful of grammars almost every session
@@ -317,69 +312,21 @@ export default defineConfig({
           // deliberately absent: the build ships 2500+ lazy chunks (~150MB), and
           // precaching them would have the installed PWA pull every one of them
           // on a phone before the first screen is usable. They are
-          // content-hashed, so `spa-assets` below caches them CacheFirst as they
-          // are actually requested instead.
+          // content-hashed, so the worker's `spa-assets` route caches them
+          // CacheFirst as they are actually requested instead.
           globPatterns: ['**/*.css', 'i18n/**/*.js', 'shiki/**/*.js'],
           manifestTransforms: [pwaPrecacheAllowlist],
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
-          // Never answer a navigation from the precached build artifact: that
-          // HTML has no `window.__SERVER_CONFIG__`, so the SPA would boot
-          // config-less. Offline support comes from the `app-shell` rule below,
-          // which falls back to a real server response instead.
-          navigateFallback: null,
-          runtimeCaching: [
-            {
-              // Offline fallback for navigations. Network first, so an online
-              // load always takes the freshly rendered template (current server
-              // config, SEO head, locale). Only when the network fails — or
-              // stalls past the timeout — do we serve the last real response
-              // this device received, which is stale but genuinely came from the
-              // server. The tradeoff: on a very slow connection a 3s stall
-              // yields a page booted from a possibly outdated server config.
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'app-shell',
-                expiration: { maxEntries: 20 },
-                networkTimeoutSeconds: 3,
-              },
-              urlPattern: ({ request }: { request: Request }) => request.mode === 'navigate',
-            },
-            ...sharedPwaRuntimeCaching,
-            {
-              // Content-hashed build chunks: a given URL's bytes never change,
-              // so serving from cache is always correct and a new deploy simply
-              // requests new filenames.
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'spa-assets',
-                expiration: { maxAgeSeconds: 60 * 60 * 24 * 30, maxEntries: 400 },
-              },
-              urlPattern: ({ url }: { url: URL }) =>
-                /\/assets\/.+\.(?:js|css)$/i.test(url.pathname),
-            },
-            {
-              handler: 'StaleWhileRevalidate',
-              options: { cacheName: 'google-fonts-stylesheets' },
-              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            },
-            {
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'google-fonts-webfonts',
-                expiration: { maxAgeSeconds: 60 * 60 * 24 * 365, maxEntries: 30 },
-              },
-              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            },
-            {
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'image-assets',
-                expiration: { maxAgeSeconds: 60 * 60 * 24 * 30, maxEntries: 100 },
-              },
-              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico|avif)$/i,
-            },
-          ],
+          minify: true,
+          // Registered without `type: 'module'`, so it must be a classic script.
+          rollupFormat: 'iife',
         },
+        injectRegister: null,
+        manifest: false,
+        srcDir: 'src/features/PWA/sw',
+        // The Web Share Target POST handler is custom worker code, which
+        // generateSW has no room for. Runtime caching moved into the source.
+        strategies: 'injectManifest',
       }),
   ].filter(Boolean) as PluginOption[],
 

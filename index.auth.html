@@ -8,6 +8,14 @@
     <link rel="shortcut icon" href="/favicon-32x32.ico" />
     <!--SEO_META-->
     <style>
+      /* Native controls, scrollbars and <select> popups follow the app theme
+         instead of the OS one. */
+      html {
+        color-scheme: light;
+      }
+      html[data-theme='dark'] {
+        color-scheme: dark;
+      }
       html body {
         background: #f8f8f8;
       }

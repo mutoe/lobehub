@@ -22,7 +22,7 @@ import {
 import SplitDropZone from '@/features/Conversation/SplitDropZone';
 import { useAgentContext } from '@/features/Conversation/useAgentContext';
 import { mergeConversationHooks } from '@/features/Conversation/utils/mergeConversationHooks';
-import SharedTextFromUrl from '@/features/PWA/SharedTextFromUrl';
+import SharedContentFromUrl from '@/features/PWA/SharedContentFromUrl';
 import { useGatewayReconnect } from '@/hooks/useGatewayReconnect';
 import { useOperationState } from '@/hooks/useOperationState';
 import { useScheduledRunWatch } from '@/hooks/useScheduledRunWatch';
@@ -190,7 +190,7 @@ const Conversation = memo(() => {
       )}
       <ExposeMainEditor />
       <ComposerDraftReceiver />
-      <SharedTextFromUrl />
+      <SharedContentFromUrl />
       <ThreadHydration />
       <ChatMiniMap />
       <ForwardMessageDispatcher />
