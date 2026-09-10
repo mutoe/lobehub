@@ -176,7 +176,7 @@ describe('PWA app-like capabilities', () => {
       const result = manifest.generate(baseInput) as any;
 
       expect(result.share_target).toEqual({
-        action: '/agent/inbox',
+        action: '/webapi/share-target',
         enctype: 'multipart/form-data',
         method: 'POST',
         params: {
