@@ -96,7 +96,7 @@ for i in $(seq 1 180); do
   code="$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:$PORT/signin" 2>/dev/null || true)"
   if [[ "$code" == "200" ]]; then
     echo "OK signin 200 (${i}s)"
-    echo "==> http://localhost:$PORT  （停：scripts/run-nas-image-local.sh --stop；日志：docker logs -f $NAME）"
+    echo "==> http://localhost:${PORT}  （停：scripts/run-nas-image-local.sh --stop；日志：docker logs -f ${NAME}）"
     exit 0
   fi
   sleep 1
