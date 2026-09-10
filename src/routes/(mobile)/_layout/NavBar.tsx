@@ -23,7 +23,13 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   container: css`
     position: fixed;
     z-index: 100;
-    inset-block-end: 0;
+
+    /* Fork: the tab bar is the only fixed-bottom element on mobile, so it is
+       anchored to the viewport rather than to body's content box — where the
+       safe-area padding from index.mobile.html has already made room. Lifting
+       it by the same inset keeps it clear of the gesture pill; 0 everywhere
+       else, so this is inert off edge-to-edge. */
+    inset-block-end: env(safe-area-inset-bottom);
     inset-inline: 0;
   `,
 }));
