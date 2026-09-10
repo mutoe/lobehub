@@ -19,6 +19,7 @@ import { chatSelectors } from '@/store/chat/selectors';
 import { fileChatSelectors, useFileStore } from '@/store/file';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
+import { useServerConfigStore } from '@/store/serverConfig';
 
 import { type ActionToolbarProps } from '../ActionBar';
 import ActionBar from '../ActionBar';
@@ -151,6 +152,7 @@ const DesktopChatInput = memo<DesktopChatInputProps>(
     ]);
 
     const chatKey = useChatStore(chatSelectors.currentChatKey);
+    const mobile = useServerConfigStore((s) => s.isMobile);
 
     // The ControlBar (or the custom slot standing in for it) hosts the
     // context-window token tag; without one, SendArea keeps it beside Send.
@@ -192,7 +194,10 @@ const DesktopChatInput = memo<DesktopChatInputProps>(
     const loadingRightSlot = isConfigLoading ? (
       <Skeleton radius={999} style={{ height: 32, minWidth: 64, width: 64 }} />
     ) : null;
-    const noticeNode = !isConfigLoading && <ChatInputNotice />;
+    // Fork: on a phone the action bar has no room for an inline notice (it
+    // truncated to "当前…" and pushed the button onto its own line), so the
+    // notice moves to the header as a full-width row above the editor.
+    const noticeNode = !isConfigLoading && <ChatInputNotice block={mobile} />;
     // The action bar is `width: 100%`, so a sibling placed *inside* its
     // shrink-to-fit box is pushed past the bar's right edge and leaves a
     // one-slot hole between the last action and the expand toggle. Keep the
@@ -212,14 +217,15 @@ const DesktopChatInput = memo<DesktopChatInputProps>(
         <ComposerExpandButton />
       </Flexbox>
     );
-    const leftSlot = noticeNode ? (
-      <Flexbox horizontal align={'center'} className={styles.leftSlot} gap={4}>
-        {leftSlotContent}
-        {noticeNode}
-      </Flexbox>
-    ) : (
-      leftSlotContent
-    );
+    const leftSlot =
+      noticeNode && !mobile ? (
+        <Flexbox horizontal align={'center'} className={styles.leftSlot} gap={4}>
+          {leftSlotContent}
+          {noticeNode}
+        </Flexbox>
+      ) : (
+        leftSlotContent
+      );
 
     const content = (
       <Flexbox
@@ -261,6 +267,7 @@ const DesktopChatInput = memo<DesktopChatInputProps>(
           header={
             <Flexbox gap={0}>
               {extentHeaderContent}
+              {mobile && noticeNode}
               {showTypoBar && <TypoBar />}
               {contextContainerNode}
             </Flexbox>
