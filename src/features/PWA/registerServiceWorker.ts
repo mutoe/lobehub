@@ -26,7 +26,7 @@ export const registerServiceWorker = () => {
   // The worker is a production build artifact; it does not exist in dev.
   if (import.meta.env.DEV) return;
 
-  window.addEventListener('load', () => {
+  const register = () => {
     navigator.serviceWorker.register('/sw.js').then(
       (registration) => log('registered, scope=%s', registration.scope),
       // A failed registration must stay non-fatal: the app works fine without
@@ -34,5 +34,12 @@ export const registerServiceWorker = () => {
       // rejection on every cold start.
       (error) => log('registration failed: %o', error),
     );
-  });
+  };
+
+  // Deferred until `load` so the worker's install does not compete with the
+  // first paint for bandwidth — but the entry bundle is evaluated behind
+  // top-level awaits, and on a fast connection `load` has already fired by
+  // the time this runs. A listener attached then would never be called.
+  if (document.readyState === 'complete') register();
+  else window.addEventListener('load', register, { once: true });
 };
