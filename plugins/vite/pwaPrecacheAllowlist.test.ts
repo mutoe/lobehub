@@ -58,9 +58,18 @@ describe('pwaPrecacheAllowlist', () => {
     ]);
 
     expect(result.manifest.map((entry) => entry.url)).toEqual([
-      'assets/index-B3JXVkjS.css',
-      'i18n/i18n-zh-CN-BFYDkEMg.js',
-      'shiki/python-abc12345.js',
+      '/_spa/assets/index-B3JXVkjS.css',
+      '/_spa/i18n/i18n-zh-CN-BFYDkEMg.js',
+      '/_spa/shiki/python-abc12345.js',
     ]);
+  });
+
+  it('rewrites every url to where the build is actually served from', () => {
+    // The worker lives at the site root while the bundle lives under /_spa/.
+    // A relative `assets/x.css` resolves to /assets/x.css from there — a 404
+    // that fails the whole precache install and leaves the worker inactive.
+    const result = pwaPrecacheAllowlist([{ revision: 'abc', url: 'assets/index-B3JXVkjS.css' }]);
+
+    expect(result.manifest).toEqual([{ revision: 'abc', url: '/_spa/assets/index-B3JXVkjS.css' }]);
   });
 });
