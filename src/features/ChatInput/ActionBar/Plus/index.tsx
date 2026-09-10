@@ -796,6 +796,8 @@ const PlusAction = memo(() => {
       dropdown={{
         menu: { useItems: usePlusMenuItems },
         minWidth: 220,
+        // Fork: a five-row menu does not need the phone-wide default.
+        mobileWidth: 'min(100vw - 32px, 320px)',
         placement: 'topLeft',
       }}
     />

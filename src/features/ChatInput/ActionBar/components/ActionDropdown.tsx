@@ -189,6 +189,12 @@ export interface ActionDropdownProps extends Omit<DropdownMenuProps, 'items'> {
   menu: ActionDropdownMenu;
   minHeight?: number | string;
   minWidth?: number | string;
+  /**
+   * Fork: popup width on mobile, where the default is the full viewport
+   * (`100vw`). A short menu — the Plus menu is five rows — looks stranded in a
+   * phone-wide sheet, so callers can cap it.
+   */
+  mobileWidth?: CSSProperties['width'];
   popupRender?: (menu: ReactNode) => ReactNode;
   /**
    * Whether to pre-render the dropdown overlay on mount, to avoid rendering lag on first expand
@@ -207,6 +213,7 @@ const ActionDropdown = memo<ActionDropdownProps>(
     maxWidth,
     minHeight,
     minWidth,
+    mobileWidth,
     onOpenChange,
     onOpenChangeComplete,
     open,
@@ -386,7 +393,7 @@ const ActionDropdown = memo<ActionDropdownProps>(
         minWidth: isMobile ? undefined : minWidth,
         overflowX: 'hidden',
         overflowY: 'scroll',
-        width: isMobile ? '100vw' : undefined,
+        width: isMobile ? (mobileWidth ?? '100vw') : undefined,
       };
       const popupStyle = popupProps?.style;
 
@@ -403,7 +410,16 @@ const ActionDropdown = memo<ActionDropdownProps>(
         ...menu.style,
         ...popupStyle,
       };
-    }, [isMobile, maxHeight, maxWidth, menu.style, minHeight, minWidth, popupProps?.style]);
+    }, [
+      isMobile,
+      maxHeight,
+      maxWidth,
+      menu.style,
+      minHeight,
+      minWidth,
+      mobileWidth,
+      popupProps?.style,
+    ]);
 
     const resolvedPopupProps = useMemo(() => {
       if (!popupProps) {
