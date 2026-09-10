@@ -57,7 +57,10 @@ val() { grep -E "^$1=" "$NAS_ENV" | head -1 | cut -d= -f2- | sed -e 's/^"//' -e 
 # 被覆盖的键先从 NAS .env 里剔掉，避免 --env-file 里同名键谁生效的歧义。
 OVERRIDE_KEYS='APP_URL|DATABASE_URL|REDIS_URL|REDIS_PREFIX|REDIS_TLS|S3_ENDPOINT|S3_BUCKET|S3_ENABLE_PATH_STYLE|S3_ACCESS_KEY|S3_ACCESS_KEY_ID|S3_SECRET_ACCESS_KEY|S3_SET_ACL|KEY_VAULTS_SECRET|AUTH_SECRET|LLM_VISION_IMAGE_USE_BASE64|SSRF_ALLOW_PRIVATE_IP_ADDRESS'
 {
-  grep -vE "^($OVERRIDE_KEYS)=" "$NAS_ENV" | grep -vE '^\s*(#|$)'
+  # docker run --env-file 不像 compose 的 env_file 那样剥引号：`X="http://…"` 会把引号
+  # 一起塞进环境，URL 校验直接报 Invalid environment variables。这里统一剥掉。
+  grep -vE "^($OVERRIDE_KEYS)=" "$NAS_ENV" | grep -vE '^\s*(#|$)' \
+    | sed -E "s/^([A-Za-z_][A-Za-z0-9_]*)=\"(.*)\"\$/\1=\2/; s/^([A-Za-z_][A-Za-z0-9_]*)='(.*)'\$/\1=\2/"
   cat <<EOF
 APP_URL=http://localhost:$PORT
 KEY_VAULTS_SECRET=$(val KEY_VAULTS_SECRET)
