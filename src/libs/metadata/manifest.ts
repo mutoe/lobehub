@@ -25,6 +25,8 @@ interface ScreenshotItem {
 export class Manifest {
   public generate({
     color = COLOR,
+    // Fork: splash background may differ from theme_color (see manifestAppearance)
+    backgroundColor = color,
     description,
     name,
     id,
@@ -33,6 +35,7 @@ export class Manifest {
     locale = 'en-US',
     screenshots,
   }: {
+    backgroundColor?: string;
     color?: string;
     description: string;
     icons: IconItem[];
@@ -42,7 +45,7 @@ export class Manifest {
     screenshots: ScreenshotItem[];
   }) {
     return {
-      background_color: color,
+      background_color: backgroundColor,
       cache_busting_mode: 'all',
       categories: ['productivity', 'design', 'development', 'education'],
       description,
