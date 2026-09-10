@@ -1,10 +1,10 @@
 'use client';
 
+import { Drawer } from '@lobehub/ui/base-ui';
 import type { PropsWithChildren } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import ImperativeModal from '@/components/ImperativeModal';
 import { OverlayContainerContext } from '@/features/NavPanel/OverlayContainer';
 import { useFetchTopics } from '@/hooks/useFetchTopics';
 import { useWorkspaceModal } from '@/hooks/useWorkspaceModal';
@@ -24,20 +24,23 @@ const Topics = memo(({ children }: PropsWithChildren) => {
 
   return (
     <OverlayContainerContext value={overlayContainer}>
-      <ImperativeModal
-        allowFullscreen
-        footer={null}
+      {/* Fork: a bottom sheet instead of a centered modal — on a phone the modal
+          floated mid-screen with the composer peeking out underneath. */}
+      <Drawer
+        height={'90%'}
         open={open}
+        placement={'bottom'}
         title={t('title')}
         styles={{
-          body: { padding: 0 },
+          bodyContent: { height: '100%', minHeight: 0, overflow: 'hidden', padding: '0 16px' },
+          panel: { borderStartEndRadius: 16, borderStartStartRadius: 16 },
         }}
-        onCancel={() => setOpen(false)}
+        onClose={() => setOpen(false)}
       >
         <div ref={setOverlayContainer} style={{ height: '100%' }}>
           {children}
         </div>
-      </ImperativeModal>
+      </Drawer>
     </OverlayContainerContext>
   );
 });
