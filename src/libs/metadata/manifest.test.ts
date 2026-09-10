@@ -50,6 +50,21 @@ describe('Manifest', () => {
       });
     });
 
+    it('lets the splash background differ from theme_color', () => {
+      const result = manifest.generate({
+        backgroundColor: '#f8f8f8',
+        color: '#ededed',
+        description: 'Test description',
+        icons: [],
+        id: 'test-app',
+        name: 'Test App',
+        screenshots: [],
+      });
+
+      expect(result.background_color).toBe('#f8f8f8');
+      expect(result.theme_color).toBe('#ededed');
+    });
+
     it('should use default color if not provided', () => {
       const input = {
         description: 'Test description',

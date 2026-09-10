@@ -21,17 +21,20 @@ const manifest = async (): Promise<MetadataRoute.Manifest> => {
     };
   }
 
-  const [{ BRANDING_LOGO_URL, BRANDING_NAME }, { kebabCase }, { manifestModule }, locale] =
+  const [{ BRANDING_LOGO_URL, BRANDING_NAME }, { kebabCase }, { manifestModule }, locale, colors] =
     await Promise.all([
       import('@lobechat/business-const'),
       import('es-toolkit/compat'),
       import('@/libs/metadata/manifest'),
       // Fork: localized shortcut labels
       import('@/libs/metadata/manifestLocale').then((m) => m.resolveManifestLocale()),
+      // Fork: theme_color / background_color follow the appearance the app reported
+      import('@/libs/metadata/manifestAppearance').then((m) => m.resolveManifestAppearance()),
     ]);
 
   // @ts-expect-error - manifestModule.generate returns extended manifest with custom properties
   return manifestModule.generate({
+    ...colors,
     description: `${BRANDING_NAME} is a work-and-lifestyle space to find, build, and collaborate with agent teams that grow with you.`,
     locale,
     icons: [

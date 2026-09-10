@@ -12,6 +12,8 @@
  */
 import debug from 'debug';
 
+import { readAppearance, writeAppearanceCookie } from './appearanceCookie';
+
 const log = debug('lobe-pwa:theme-color');
 
 /**
@@ -19,7 +21,7 @@ const log = debug('lobe-pwa:theme-color');
  * before any stylesheet from the bundle has loaded. Only used when the live
  * value is unavailable — during boot, or under a DOM with no cascade.
  */
-const BOOT_PALETTE = { dark: '#000000', light: '#f8f8f8' } as const;
+export const BOOT_PALETTE = { dark: '#000000', light: '#f8f8f8' } as const;
 
 /**
  * Chromium discards any theme-color whose HSL lightness exceeds 0.94
@@ -105,6 +107,8 @@ export const applyThemeColor = (doc: Document): void => {
   if (meta.content === color) return;
 
   meta.content = color;
+  // Let the manifest route paint the parts the meta tag cannot reach.
+  writeAppearanceCookie(doc, readAppearance(doc));
   log('theme-color -> %s', color);
 };
 

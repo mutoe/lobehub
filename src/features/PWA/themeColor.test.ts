@@ -82,6 +82,15 @@ describe('applyThemeColor', () => {
     expect(meta()?.content).toBe('#ededed');
   });
 
+  it('records the resolved appearance in a cookie for the manifest route', () => {
+    applyThemeColor(document);
+    expect(document.cookie).toContain('LOBE_THEME_APPEARANCE=light');
+
+    document.documentElement.dataset.theme = 'dark';
+    applyThemeColor(document);
+    expect(document.cookie).toContain('LOBE_THEME_APPEARANCE=dark');
+  });
+
   it('reuses the tag the html shell already ships', () => {
     const existing = document.createElement('meta');
     existing.name = 'theme-color';
