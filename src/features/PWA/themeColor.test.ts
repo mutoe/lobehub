@@ -1,11 +1,40 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { applyThemeColor, resolveThemeColor, startThemeColorSync } from './themeColor';
+import {
+  applyThemeColor,
+  clampThemeColor,
+  resolveThemeColor,
+  startThemeColorSync,
+} from './themeColor';
 
 const meta = () => document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
 
 /** MutationObserver callbacks are delivered as microtasks. */
 const flush = () => Promise.resolve();
+
+describe('clampThemeColor', () => {
+  it('pulls the light background just under the lightness Chromium still honours', () => {
+    // #f8f8f8 has lightness 0.97; Chromium throws away anything above 0.94 and
+    // paints the status bar black — the very thing this module exists to fix.
+    expect(clampThemeColor('#f8f8f8')).toBe('#ededed');
+    expect(clampThemeColor('#ffffff')).toBe('#ededed');
+  });
+
+  it('leaves colors under the ceiling alone, normalised to hex', () => {
+    expect(clampThemeColor('#000000')).toBe('#000000');
+    expect(clampThemeColor('rgb(20, 20, 20)')).toBe('#141414');
+    expect(clampThemeColor('#abc')).toBe('#aabbcc');
+  });
+
+  it('keeps the hue when darkening a tinted color', () => {
+    // Every channel is scaled by the same factor (0.93 / 0.97 here).
+    expect(clampThemeColor('#fff0f0')).toBe('#f4e6e6');
+  });
+
+  it('passes through anything it cannot parse', () => {
+    expect(clampThemeColor('rebeccapurple')).toBe('rebeccapurple');
+  });
+});
 
 describe('resolveThemeColor', () => {
   afterEach(() => {
@@ -14,7 +43,7 @@ describe('resolveThemeColor', () => {
   });
 
   it('falls back to the boot palette when nothing is painted yet', () => {
-    expect(resolveThemeColor(document)).toBe('#f8f8f8');
+    expect(resolveThemeColor(document)).toBe('#ededed');
 
     document.documentElement.dataset.theme = 'dark';
     expect(resolveThemeColor(document)).toBe('#000000');
@@ -25,7 +54,7 @@ describe('resolveThemeColor', () => {
     // drift the moment upstream retunes the background token.
     document.body.style.backgroundColor = 'rgb(20, 20, 20)';
 
-    expect(resolveThemeColor(document)).toBe('rgb(20, 20, 20)');
+    expect(resolveThemeColor(document)).toBe('#141414');
   });
 
   it('ignores a transparent body background', () => {
@@ -33,7 +62,7 @@ describe('resolveThemeColor', () => {
     // bar at the browser default instead of the app background.
     document.body.style.backgroundColor = 'rgba(0, 0, 0, 0)';
 
-    expect(resolveThemeColor(document)).toBe('#f8f8f8');
+    expect(resolveThemeColor(document)).toBe('#ededed');
   });
 });
 
@@ -50,13 +79,13 @@ describe('applyThemeColor', () => {
   it('creates the meta tag when the document has none', () => {
     applyThemeColor(document);
 
-    expect(meta()?.content).toBe('#f8f8f8');
+    expect(meta()?.content).toBe('#ededed');
   });
 
   it('reuses the tag the html shell already ships', () => {
     const existing = document.createElement('meta');
     existing.name = 'theme-color';
-    existing.content = '#f8f8f8';
+    existing.content = '#ededed';
     document.head.append(existing);
 
     document.documentElement.dataset.theme = 'dark';
@@ -79,7 +108,7 @@ describe('startThemeColorSync', () => {
 
   it('repaints the meta tag when the app switches theme', async () => {
     stop = startThemeColorSync();
-    expect(meta()?.content).toBe('#f8f8f8');
+    expect(meta()?.content).toBe('#ededed');
 
     document.documentElement.dataset.theme = 'dark';
     await flush();
@@ -95,6 +124,6 @@ describe('startThemeColorSync', () => {
     document.documentElement.dataset.theme = 'dark';
     await flush();
 
-    expect(meta()?.content).toBe('#f8f8f8');
+    expect(meta()?.content).toBe('#ededed');
   });
 });
