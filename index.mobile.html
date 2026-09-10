@@ -7,7 +7,7 @@
     <link rel="shortcut icon" href="/favicon-32x32.ico" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#f8f8f8" />
+    <meta name="theme-color" content="#ededed" />
     <!--SEO_META-->
     <style>
       /* Native controls, scrollbars and <select> popups follow the app theme
@@ -107,7 +107,9 @@
         // once the bundle is running.
         var themeColorMeta = document.querySelector('meta[name="theme-color"]');
         if (themeColorMeta) {
-          themeColorMeta.setAttribute('content', resolvedTheme === 'dark' ? '#000000' : '#f8f8f8');
+          // Not #f8f8f8: Chromium drops theme colors lighter than ~0.94 and
+          // paints the bars black (see features/PWA/themeColor.ts).
+          themeColorMeta.setAttribute('content', resolvedTheme === 'dark' ? '#000000' : '#ededed');
         }
 
         var hl = new URLSearchParams(location.search).get('hl');
