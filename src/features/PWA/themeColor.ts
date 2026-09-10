@@ -102,13 +102,16 @@ export const applyThemeColor = (doc: Document): void => {
 
   const color = resolveThemeColor(doc);
 
+  // Let the manifest route paint the parts the meta tag cannot reach. This
+  // must not sit behind the early return below: the html shell already ships
+  // the tag with the boot color, so at startup the meta is usually unchanged.
+  writeAppearanceCookie(doc, readAppearance(doc));
+
   // Writing an unchanged value still counts as a mutation, and the browser
   // re-evaluates the system bars on every one of them.
   if (meta.content === color) return;
 
   meta.content = color;
-  // Let the manifest route paint the parts the meta tag cannot reach.
-  writeAppearanceCookie(doc, readAppearance(doc));
   log('theme-color -> %s', color);
 };
 

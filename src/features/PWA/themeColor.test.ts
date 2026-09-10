@@ -91,6 +91,20 @@ describe('applyThemeColor', () => {
     expect(document.cookie).toContain('LOBE_THEME_APPEARANCE=dark');
   });
 
+  it('still records the appearance when the shell already ships the matching tag', () => {
+    // Regression: the cookie write used to sit behind the "unchanged" early
+    // return, and the shell ships the boot color, so it never ran at startup.
+    const existing = document.createElement('meta');
+    existing.name = 'theme-color';
+    existing.content = '#ededed';
+    document.head.append(existing);
+    document.cookie = 'LOBE_THEME_APPEARANCE=dark;path=/';
+
+    applyThemeColor(document);
+
+    expect(document.cookie).toContain('LOBE_THEME_APPEARANCE=light');
+  });
+
   it('reuses the tag the html shell already ships', () => {
     const existing = document.createElement('meta');
     existing.name = 'theme-color';
