@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
-import { SHARE_FILES_FIELD, SHARE_TARGET_ACTION, SHARE_TEXT_PARAM } from './constants';
+import { SHARE_FILES_FIELD, SHARE_LANDING_PATH, SHARE_TEXT_PARAM } from './constants';
 import { buildShareRedirect, sharedFileKey, type SharedFileStore, stashSharedFiles } from './stash';
 
 const fakeStore = () => {
@@ -65,7 +65,7 @@ describe('buildShareRedirect', () => {
 
     const url = new URL(buildShareRedirect(form, 'batch-1'), 'https://example.com');
 
-    expect(url.pathname).toBe(SHARE_TARGET_ACTION);
+    expect(url.pathname).toBe(SHARE_LANDING_PATH);
     expect(url.searchParams.get('share_text')).toBe('look at this');
     expect(url.searchParams.get('share_files')).toBe('batch-1');
   });

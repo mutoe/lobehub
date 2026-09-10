@@ -1,5 +1,6 @@
 import {
   SHARE_FILES_FIELD,
+  SHARE_LANDING_PATH,
   SHARE_TARGET_ACTION,
   SHARE_TEXT_PARAM,
   SHARE_TITLE_PARAM,
@@ -21,10 +22,12 @@ export { SHARE_TEXT_PARAM, SHARE_TITLE_PARAM, SHARE_URL_PARAM };
 /**
  * Web Share Target.
  *
- * `POST` + multipart is what lets the OS hand us files. The trade-off is that a
- * POST navigation is only ever seen by the service worker (`features/PWA/sw`),
- * which parks the files and redirects to a plain GET carrying the text params
- * and a batch id — so the SPA side still reads everything from the URL.
+ * `POST` + multipart is what lets the OS hand us files. The service worker
+ * (`features/PWA/sw`) answers the POST, parks the files and redirects to a
+ * plain GET on `SHARE_LANDING_PATH` carrying the text params and a batch id —
+ * so the SPA side still reads everything from the URL. Without a worker in
+ * control the POST reaches `webapi/share-target/route.ts`, which does the same
+ * redirect minus the files.
  *
  * Text-only shares travel the same road; there is only one target per app.
  */
@@ -70,7 +73,7 @@ const SHORTCUT_LABELS: Record<'en-US' | 'zh-CN', Record<ShortcutKey, [string, st
 };
 
 const SHORTCUT_URLS: Record<ShortcutKey, string> = {
-  chat: SHARE_TARGET_ACTION,
+  chat: SHARE_LANDING_PATH,
   image: '/image',
   tasks: '/tasks',
 };

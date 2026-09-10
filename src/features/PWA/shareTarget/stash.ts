@@ -7,7 +7,7 @@ import {
   SHARE_FILES_FIELD,
   SHARE_FILES_PARAM,
   SHARE_FILES_PREFIX,
-  SHARE_TARGET_ACTION,
+  SHARE_LANDING_PATH,
   SHARE_TEXT_PARAM,
   SHARE_TITLE_PARAM,
   SHARE_URL_PARAM,
@@ -43,9 +43,9 @@ export const stashSharedFiles = async (
 const TEXT_FIELDS = [SHARE_TEXT_PARAM, SHARE_TITLE_PARAM, SHARE_URL_PARAM] as const;
 
 /**
- * The GET the worker redirects to once the files are parked. Text fields are
- * forwarded verbatim so `composeSharedText` sees the same payload it would
- * have received from a text-only share.
+ * The GET the worker (or the server-side fallback) redirects to once the files
+ * are parked. Text fields are forwarded verbatim so `composeSharedText` sees the
+ * same payload it would have received from a text-only share.
  */
 export const buildShareRedirect = (formData: FormData, batchId: string | undefined): string => {
   const params = new URLSearchParams();
@@ -60,5 +60,5 @@ export const buildShareRedirect = (formData: FormData, batchId: string | undefin
 
   const query = params.toString();
 
-  return query ? `${SHARE_TARGET_ACTION}?${query}` : SHARE_TARGET_ACTION;
+  return query ? `${SHARE_LANDING_PATH}?${query}` : SHARE_LANDING_PATH;
 };
