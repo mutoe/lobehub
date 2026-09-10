@@ -27,6 +27,12 @@ export const POST = async (request: NextRequest) => {
   }
 
   // 303 turns the POST navigation into a GET one — anything else would have
-  // the browser re-POST on reload.
-  return Response.redirect(new URL(buildShareRedirect(formData, undefined), request.url), 303);
+  // the browser re-POST on reload. The Location stays relative on purpose:
+  // behind the reverse proxy `request.url` is the container's bind address
+  // (`https://0.0.0.0:3210/...`), which is where an absolute redirect would
+  // send the phone.
+  return new Response(null, {
+    headers: { location: buildShareRedirect(formData, undefined) },
+    status: 303,
+  });
 };
