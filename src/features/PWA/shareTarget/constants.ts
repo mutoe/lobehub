@@ -9,11 +9,25 @@
  */
 
 /**
- * Where the OS delivers a share. Must stay equal to `/agent/${INBOX_SESSION_ID}`
- * — `pwaCapabilities.test.ts` pins the two together, since importing the real
- * constant here is exactly what this file must not do.
+ * Where the OS POSTs a share. The service worker normally answers it; when no
+ * worker is in control yet, the route handler at
+ * `src/app/(backend)/webapi/share-target/route.ts` does.
+ *
+ * Must live under a backend prefix (`/webapi`), never on an SPA page path:
+ * `src/app/spa/[variants]/[[...path]]/route.ts` is a statically cached GET-only
+ * handler, and Next.js writes its 405 for a stray POST into the route cache —
+ * after which every GET of that page answers 405 until the cache is purged
+ * (seen in production on 2026-09-10 when the action was `/agent/inbox`).
  */
-export const SHARE_TARGET_ACTION = '/agent/inbox';
+export const SHARE_TARGET_ACTION = '/webapi/share-target';
+
+/**
+ * Where the share ends up: the inbox conversation. Must stay equal to
+ * `/agent/${INBOX_SESSION_ID}` — `pwaCapabilities.test.ts` pins the two
+ * together, since importing the real constant here is exactly what this file
+ * must not do.
+ */
+export const SHARE_LANDING_PATH = '/agent/inbox';
 
 /**
  * Query params carrying shared text. `SharedContentFromUrl` reads them and

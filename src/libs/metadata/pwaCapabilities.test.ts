@@ -2,7 +2,7 @@
 import { INBOX_SESSION_ID } from '@lobechat/const';
 import { describe, expect, it } from 'vitest';
 
-import { SHARE_TARGET_ACTION } from '@/features/PWA/shareTarget/constants';
+import { SHARE_LANDING_PATH, SHARE_TARGET_ACTION } from '@/features/PWA/shareTarget/constants';
 
 import { getShortcuts, shareTarget } from './pwaCapabilities';
 
@@ -10,8 +10,15 @@ describe('shareTarget', () => {
   it('lands on the inbox conversation', () => {
     // constants.ts must stay dependency-free, so it hardcodes the path; this is
     // the one place that checks it against the real inbox id.
-    expect(SHARE_TARGET_ACTION).toBe(`/agent/${INBOX_SESSION_ID}`);
+    expect(SHARE_LANDING_PATH).toBe(`/agent/${INBOX_SESSION_ID}`);
+  });
+
+  it('posts to a backend endpoint, never to a cached SPA page', () => {
+    // A POST that reaches `spa/[variants]/[[...path]]/route.ts` gets a 405 that
+    // Next.js writes into the route cache — and then serves to every GET of
+    // that page. `/webapi` is exempt from both the SPA proxy and that cache.
     expect(shareTarget.action).toBe(SHARE_TARGET_ACTION);
+    expect(SHARE_TARGET_ACTION.startsWith('/webapi/')).toBe(true);
   });
 
   it('accepts images as a multipart POST', () => {
@@ -32,6 +39,10 @@ describe('getShortcuts', () => {
       'Image Generation',
       'Tasks',
     ]);
+  });
+
+  it('opens the inbox from the chat shortcut, not the share endpoint', () => {
+    expect(getShortcuts('en-US')[0].url).toBe(SHARE_LANDING_PATH);
   });
 
   it('gives every shortcut an icon and a unique root-relative url', () => {
