@@ -9,6 +9,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 import { customBrandingLoadingScreen } from './plugins/vite/customBrandingLoadingScreen';
 import { viteEnvRestartKeys } from './plugins/vite/envRestartKeys';
+import { pwaPrecacheAllowlist } from './plugins/vite/pwaPrecacheAllowlist';
 import {
   createSharedRolldownOutput,
   sharedModulePreload,
@@ -282,17 +283,80 @@ export default defineConfig({
       },
     },
 
-    !isAuth &&
+    // Mobile-only on purpose. A service worker can only control URLs under its
+    // own path, and the SPA bundle is served from `/_spa/` — a SW sitting there
+    // would own nothing the user actually navigates to. It therefore has to be
+    // copied to `/sw.js` (see scripts/copySpaBuildCore.ts), and since one scope
+    // can only have one active SW, we register it for the surface where the
+    // cold-start/offline win matters: the installed mobile PWA.
+    isMobile &&
       VitePWA({
         injectRegister: null,
         manifest: false,
         registerType: 'prompt',
         workbox: {
-          globIgnores: sharedPwaGlobIgnores,
-          globPatterns: ['**/*.{js,css,html,woff2}'],
+          // Single self-contained file: the SW is copied to the site root while
+          // its siblings stay under `/_spa/`, so a separate workbox runtime
+          // chunk would be fetched from a path that does not exist.
+          inlineWorkboxRuntime: true,
+          // Upstream excludes i18n and shiki wholesale; drop those two rules so
+          // `pwaPrecacheAllowlist` can let a curated subset back in (the
+          // installed locale + the handful of grammars almost every session
+          // hits). Everything else upstream ignores stays ignored.
+          globIgnores: [
+            ...sharedPwaGlobIgnores.filter(
+              (pattern) => !pattern.startsWith('i18n/') && !pattern.startsWith('shiki/'),
+            ),
+            // A previous build's output lives in `public/_spa*` and is copied
+            // into this one verbatim by vite's publicDir handling. Docker builds
+            // clear it first, but if that order ever changes these would be
+            // precached a second time under a different path.
+            '_spa*/**',
+          ],
+          // Stylesheets plus the allowlisted i18n/shiki chunks. Route JS is
+          // deliberately absent: the build ships 2500+ lazy chunks (~150MB), and
+          // precaching them would have the installed PWA pull every one of them
+          // on a phone before the first screen is usable. They are
+          // content-hashed, so `spa-assets` below caches them CacheFirst as they
+          // are actually requested instead.
+          globPatterns: ['**/*.css', 'i18n/**/*.js', 'shiki/**/*.js'],
+          manifestTransforms: [pwaPrecacheAllowlist],
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+          // Never answer a navigation from the precached build artifact: that
+          // HTML has no `window.__SERVER_CONFIG__`, so the SPA would boot
+          // config-less. Offline support comes from the `app-shell` rule below,
+          // which falls back to a real server response instead.
+          navigateFallback: null,
           runtimeCaching: [
+            {
+              // Offline fallback for navigations. Network first, so an online
+              // load always takes the freshly rendered template (current server
+              // config, SEO head, locale). Only when the network fails — or
+              // stalls past the timeout — do we serve the last real response
+              // this device received, which is stale but genuinely came from the
+              // server. The tradeoff: on a very slow connection a 3s stall
+              // yields a page booted from a possibly outdated server config.
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'app-shell',
+                expiration: { maxEntries: 20 },
+                networkTimeoutSeconds: 3,
+              },
+              urlPattern: ({ request }: { request: Request }) => request.mode === 'navigate',
+            },
             ...sharedPwaRuntimeCaching,
+            {
+              // Content-hashed build chunks: a given URL's bytes never change,
+              // so serving from cache is always correct and a new deploy simply
+              // requests new filenames.
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'spa-assets',
+                expiration: { maxAgeSeconds: 60 * 60 * 24 * 30, maxEntries: 400 },
+              },
+              urlPattern: ({ url }: { url: URL }) =>
+                /\/assets\/.+\.(?:js|css)$/i.test(url.pathname),
+            },
             {
               handler: 'StaleWhileRevalidate',
               options: { cacheName: 'google-fonts-stylesheets' },
@@ -313,14 +377,6 @@ export default defineConfig({
                 expiration: { maxAgeSeconds: 60 * 60 * 24 * 30, maxEntries: 100 },
               },
               urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico|avif)$/i,
-            },
-            {
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'api-cache',
-                expiration: { maxAgeSeconds: 60 * 5, maxEntries: 50 },
-              },
-              urlPattern: /\/(api|trpc)\/.*/i,
             },
           ],
         },

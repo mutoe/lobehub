@@ -160,3 +160,58 @@ describe('manifestModule', () => {
     expect(manifestModule).toBeInstanceOf(Manifest);
   });
 });
+
+describe('PWA app-like capabilities', () => {
+  const manifest = new Manifest();
+  const baseInput = {
+    description: 'Test description',
+    icons: [],
+    id: 'test-app',
+    name: 'Test App',
+    screenshots: [],
+  };
+
+  describe('share_target', () => {
+    it('registers the app in the OS share sheet via a GET share target', () => {
+      const result = manifest.generate(baseInput) as any;
+
+      expect(result.share_target).toEqual({
+        action: '/agent/inbox',
+        method: 'GET',
+        params: {
+          text: 'share_text',
+          title: 'share_title',
+          url: 'share_url',
+        },
+      });
+    });
+
+    it('uses GET so the shared payload arrives as query params the SPA can read', () => {
+      const result = manifest.generate(baseInput) as any;
+
+      // A POST target would need a service-worker fetch handler to intercept the
+      // multipart body; GET keeps the whole flow inside the SPA router.
+      expect(result.share_target.method).toBe('GET');
+    });
+  });
+
+  describe('shortcuts', () => {
+    it('exposes long-press shortcuts with unique urls', () => {
+      const result = manifest.generate(baseInput) as any;
+
+      expect(Array.isArray(result.shortcuts)).toBe(true);
+      expect(result.shortcuts.length).toBeGreaterThan(0);
+
+      for (const shortcut of result.shortcuts) {
+        expect(shortcut).toMatchObject({
+          name: expect.any(String),
+          url: expect.any(String),
+        });
+        expect(shortcut.url.startsWith('/')).toBe(true);
+      }
+
+      const urls = result.shortcuts.map((s: any) => s.url);
+      expect(new Set(urls).size).toBe(urls.length);
+    });
+  });
+});
