@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f8f8f8" />
+    <meta name="theme-color" content="#ededed" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="shortcut icon" href="/favicon-32x32.ico" />
     <!--SEO_META-->
@@ -79,7 +79,9 @@
         // hardcoded black while the user is signing in.
         var themeColorMeta = document.querySelector('meta[name="theme-color"]');
         if (themeColorMeta) {
-          themeColorMeta.setAttribute('content', resolvedTheme === 'dark' ? '#000000' : '#f8f8f8');
+          // Not #f8f8f8: Chromium drops theme colors lighter than ~0.94 and
+          // paints the bars black (see features/PWA/themeColor.ts).
+          themeColorMeta.setAttribute('content', resolvedTheme === 'dark' ? '#000000' : '#ededed');
         }
 
         var hl = new URLSearchParams(location.search).get('hl');
