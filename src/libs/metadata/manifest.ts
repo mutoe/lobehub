@@ -3,6 +3,8 @@ import qs from 'query-string';
 
 import { getCanonicalUrl } from '@/server/utils/url';
 
+import { shareTarget, shortcuts } from './pwaCapabilities';
+
 const MAX_AGE = 31_536_000;
 const COLOR = '#000000';
 
@@ -61,7 +63,9 @@ export class Manifest {
       ],
       scope: '/',
       screenshots: screenshots.map((item) => this._getScreenshot(item)),
+      share_target: shareTarget,
       short_name: name,
+      shortcuts,
       splash_pages: null,
       start_url: '/',
       tab_strip: {
