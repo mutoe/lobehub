@@ -47,6 +47,16 @@ export const shouldPrecache = (url: string): boolean => {
 };
 
 /**
+ * Where scripts/copySpaBuildCore.ts publishes the mobile build. Manifest urls
+ * come out of the build relative to `dist/mobile` (`assets/x.css`), and workbox
+ * resolves them against the worker's own location — which is the site root,
+ * because the worker has to be lifted out of `/_spa/` to control any route.
+ * Left relative they would point at `/assets/x.css`, 404, and one failed
+ * precache entry fails the whole install: the worker silently never activates.
+ */
+export const SPA_PUBLIC_BASE = '/_spa/';
+
+/**
  * workbox `manifestTransforms` entry.
  *
  * Generic over the entry shape rather than redeclaring workbox's `ManifestEntry`:
@@ -55,5 +65,7 @@ export const shouldPrecache = (url: string): boolean => {
  * transform assignable to `ManifestTransform` for free.
  */
 export const pwaPrecacheAllowlist = <T extends { url: string }>(entries: T[]) => ({
-  manifest: entries.filter((entry) => shouldPrecache(entry.url)),
+  manifest: entries
+    .filter((entry) => shouldPrecache(entry.url))
+    .map((entry) => ({ ...entry, url: `${SPA_PUBLIC_BASE}${entry.url.replace(/^\/+/, '')}` })),
 });
