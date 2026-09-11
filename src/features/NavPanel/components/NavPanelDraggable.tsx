@@ -1,7 +1,7 @@
 'use client';
 
 import { DraggablePanel } from '@lobehub/ui/base-ui';
-import { createStaticStyles, cssVar } from 'antd-style';
+import { createStaticStyles, cssVar, cx } from 'antd-style';
 import { type ReactNode } from 'react';
 import { Activity, memo, Suspense, useMemo, useRef } from 'react';
 
@@ -11,6 +11,7 @@ import Footer from '@/features/HomeSidebar/Footer';
 import { USER_DROPDOWN_ICON_ID } from '@/features/NavPanel/constants';
 import { TOGGLE_BUTTON_ID } from '@/features/NavPanel/ToggleLeftPanelButton';
 import OverlayRail from '@/features/TabletLayout/OverlayRail';
+import { resizeGripStyles } from '@/features/TabletLayout/resizeGripStyles';
 import { useDismissOnNavigate } from '@/features/TabletLayout/useDismissOnNavigate';
 import { useOverlayAutoCollapse } from '@/features/TabletLayout/useOverlayAutoCollapse';
 import { useTabletNavPanelMode } from '@/features/TabletLayout/useTabletNavPanelMode';
@@ -113,15 +114,6 @@ const draggableStyles = createStaticStyles(({ css, cssVar }) => ({
         width: 14px !important;
         opacity: 1;
       }
-
-      /* The resize handle straddles the panel edge and the outer half is
-         clipped by the panel's overflow, leaving ~5px for a finger. Pull it
-         fully inside and widen it where there is no hover to reveal it. */
-      .ant-draggable-panel-right-handle {
-        inset-inline-end: 0;
-        transform: none;
-        width: 20px;
-      }
     }
   `,
 }));
@@ -135,7 +127,8 @@ interface NavPanelDraggableProps {
 }
 
 const classNames = {
-  content: draggableStyles.content,
+  // Visible drag grip on the resize edge (fork: TabletLayout/resizeGripStyles).
+  content: cx(draggableStyles.content, resizeGripStyles.host),
 };
 
 const hiddenLayerStyle = { display: 'none' };
