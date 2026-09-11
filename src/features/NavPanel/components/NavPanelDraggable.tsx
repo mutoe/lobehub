@@ -10,12 +10,16 @@ import { isDesktop } from '@/const/version';
 import Footer from '@/features/HomeSidebar/Footer';
 import { USER_DROPDOWN_ICON_ID } from '@/features/NavPanel/constants';
 import { TOGGLE_BUTTON_ID } from '@/features/NavPanel/ToggleLeftPanelButton';
+import OverlayRail from '@/features/TabletLayout/OverlayRail';
+import { useIsTabletViewport } from '@/features/TabletLayout/useIsTabletViewport';
+import { useOverlayAutoCollapse } from '@/features/TabletLayout/useOverlayAutoCollapse';
 import { useGlobalStore } from '@/store/global';
 import {
   NAV_PANEL_MAX_WIDTH,
   NAV_PANEL_MIN_WIDTH,
   systemStatusSelectors,
 } from '@/store/global/selectors';
+import { HOVER_NONE_CSS } from '@/utils/hoverNone';
 import { isMacOS } from '@/utils/platform';
 
 import { useNavPanelSizeChangeHandler } from '../hooks/useNavPanel';
@@ -96,6 +100,18 @@ const draggableStyles = createStaticStyles(({ css, cssVar }) => ({
         opacity: 1;
       }
     }
+
+    ${HOVER_NONE_CSS} {
+      #${TOGGLE_BUTTON_ID} {
+        width: 32px !important;
+        opacity: 1;
+      }
+
+      #${USER_DROPDOWN_ICON_ID} {
+        width: 14px !important;
+        opacity: 1;
+      }
+    }
   `,
 }));
 
@@ -120,6 +136,14 @@ export const NavPanelDraggable = memo<NavPanelDraggableProps>(({ activeContent, 
     systemStatusSelectors.isStatusInit(s),
   ]);
   const handleSizeChange = useNavPanelSizeChangeHandler();
+  // Tablet: the nav hangs over the transcript instead of taking a 280px column.
+  const overlay = useIsTabletViewport();
+  useOverlayAutoCollapse({
+    enabled: overlay,
+    expand: Boolean(expand),
+    ready: isStatusInit,
+    toggle: togglePanel,
+  });
 
   // Defer DraggablePanel mount until system status hydrates; otherwise defaultSize
   // captures the pre-hydration default and the DOM drifts off NavigationBar's live width.
@@ -138,53 +162,65 @@ export const NavPanelDraggable = memo<NavPanelDraggableProps>(({ activeContent, 
 
   if (defaultWidthRef.current === 0) {
     const pendingWidth = systemStatusSelectors.leftPanelWidth(useGlobalStore.getState());
-    return <div aria-hidden style={{ flexShrink: 0, height: '100%', width: pendingWidth }} />;
+    return (
+      <div
+        aria-hidden
+        style={{ flexShrink: 0, height: '100%', width: overlay ? 0 : pendingWidth }}
+      />
+    );
   }
 
   const defaultSize = { height: '100%', width: defaultWidthRef.current };
   const isHomeActive = activeContent.key === 'home';
 
   return (
-    <DraggablePanel
-      className={draggableStyles.panel}
-      classNames={classNames}
-      defaultSize={defaultSize}
-      expand={expand}
-      expandable={false}
-      maxWidth={NAV_PANEL_MAX_WIDTH}
-      minWidth={NAV_PANEL_MIN_WIDTH}
+    <OverlayRail
+      enabled={overlay}
       placement="left"
-      showBorder={false}
-      style={styles}
-      onExpandChange={togglePanel}
-      onSizeDragging={handleSizeChange}
+      showBackdrop={expand}
+      onDismiss={() => togglePanel(false)}
     >
-      <div className={draggableStyles.inner}>
-        {/* Home stays mounted while a route-owned panel is active so its list
-            state survives the round trip. Activity keeps the fibers but not the
-            visibility, so the layer is force-hidden like HomeLayout does. */}
-        {homeContent && (
-          <Activity mode={isHomeActive ? 'visible' : 'hidden'} name="NavPanelHome">
-            <div
-              className={draggableStyles.layer}
-              style={isHomeActive ? undefined : hiddenLayerStyle}
-            >
-              {homeContent}
+      <DraggablePanel
+        className={draggableStyles.panel}
+        classNames={classNames}
+        defaultSize={defaultSize}
+        expand={expand}
+        expandable={false}
+        maxWidth={NAV_PANEL_MAX_WIDTH}
+        minWidth={NAV_PANEL_MIN_WIDTH}
+        placement="left"
+        showBorder={false}
+        style={styles}
+        onExpandChange={togglePanel}
+        onSizeDragging={handleSizeChange}
+      >
+        <div className={draggableStyles.inner}>
+          {/* Home stays mounted while a route-owned panel is active so its list
+              state survives the round trip. Activity keeps the fibers but not the
+              visibility, so the layer is force-hidden like HomeLayout does. */}
+          {homeContent && (
+            <Activity mode={isHomeActive ? 'visible' : 'hidden'} name="NavPanelHome">
+              <div
+                className={draggableStyles.layer}
+                style={isHomeActive ? undefined : hiddenLayerStyle}
+              >
+                {homeContent}
+              </div>
+            </Activity>
+          )}
+          {!isHomeActive && (
+            <div className={draggableStyles.layer} key={activeContent.key}>
+              {activeContent.node}
             </div>
-          </Activity>
-        )}
-        {!isHomeActive && (
-          <div className={draggableStyles.layer} key={activeContent.key}>
-            {activeContent.node}
-          </div>
-        )}
-      </div>
-      <Suspense fallback={null}>
-        <NavPanelUpgradeEntry />
-      </Suspense>
-      <Suspense>
-        <Footer />
-      </Suspense>
-    </DraggablePanel>
+          )}
+        </div>
+        <Suspense fallback={null}>
+          <NavPanelUpgradeEntry />
+        </Suspense>
+        <Suspense>
+          <Footer />
+        </Suspense>
+      </DraggablePanel>
+    </OverlayRail>
   );
 });

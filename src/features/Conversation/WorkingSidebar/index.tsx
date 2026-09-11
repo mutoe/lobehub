@@ -52,6 +52,7 @@ import SkeletonList from '@/features/NavPanel/components/SkeletonList';
 import { getPortalViewWidth } from '@/features/Portal/portalWidth';
 import TopicCommentsSidebar from '@/features/Portal/TopicComments/Sidebar';
 import RightPanel from '@/features/RightPanel';
+import { useIsTabletViewport } from '@/features/TabletLayout/useIsTabletViewport';
 import { resolveTargetDeviceId } from '@/helpers/agentWorkingDirectory';
 import { resolveExecutionTarget } from '@/helpers/executionTarget';
 import { useIsGatewayModeEnabled } from '@/helpers/gatewayMode';
@@ -874,8 +875,12 @@ const AgentWorkingSidebar = memo<AgentWorkingSidebarProps>(({ availableWidth }) 
     availableWidth,
     portalWidth: portalOpen ? portalWidth : 0,
   });
-  const fits = widthBudget >= minDisplayWidth;
-  const overviewFits = widthBudget >= MIN_PANEL_WIDTH;
+  // Tablet: the panel is an overlay (see the chat `_layout`'s OverlayRail), so
+  // it never competes with the conversation and always "fits"; the Overview
+  // card, which would still take an in-flow column, yields instead.
+  const tablet = useIsTabletViewport();
+  const fits = tablet || widthBudget >= minDisplayWidth;
+  const overviewFits = !tablet && widthBudget >= MIN_PANEL_WIDTH;
   const renderWidth = Math.min(displayWidth, Math.max(widthBudget, minDisplayWidth));
   // Also cap the drag range so releasing a drag can never persist a width that
   // immediately fails the fit check and hides the panel.

@@ -1,5 +1,7 @@
 import { createStaticStyles, keyframes } from 'antd-style';
 
+import { TABLET_HOVER_NONE_CSS } from '@/utils/hoverNone';
+
 export const styles = createStaticStyles(({ css, cssVar }) => {
   const locateHighlight = keyframes`
     0%, 100% {
@@ -45,6 +47,14 @@ export const styles = createStaticStyles(({ css, cssVar }) => {
       }
 
       &:hover {
+        time,
+        div[role='menubar'] {
+          pointer-events: unset;
+          opacity: 1;
+        }
+      }
+
+      ${TABLET_HOVER_NONE_CSS} {
         time,
         div[role='menubar'] {
           pointer-events: unset;

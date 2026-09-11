@@ -51,6 +51,8 @@ venv/
 
 # Dependencies
 node_modules/
+# worktrees symlink node_modules to the main checkout; a symlink is not a dir
+node_modules
 *.lock
 package-lock.json
 bun.lockb
