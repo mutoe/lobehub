@@ -10,6 +10,9 @@ export const TABLET_MAX_VIEWPORT_WIDTH = 1024;
 /** `matchMedia` form of {@link TABLET_MAX_VIEWPORT_WIDTH}. */
 export const TABLET_VIEWPORT_MEDIA = `(max-width: ${TABLET_MAX_VIEWPORT_WIDTH}px)`;
 
+/** CSS `@media` form of {@link TABLET_VIEWPORT_MEDIA}. */
+export const TABLET_VIEWPORT_CSS = `@media ${TABLET_VIEWPORT_MEDIA}`;
+
 export const TABLET_OVERLAY_BACKDROP_Z = 20;
 export const TABLET_OVERLAY_PANEL_Z = 21;
 
