@@ -1,7 +1,7 @@
 'use client';
 
 import { createStaticStyles, cssVar } from 'antd-style';
-import { type ReactNode } from 'react';
+import { type CSSProperties, type ReactNode } from 'react';
 import { memo } from 'react';
 
 import {
@@ -37,6 +37,14 @@ interface OverlayRailProps {
 }
 
 /**
+ * While the rail is in normal flow the two wrappers must not remount the child
+ * (`DraggablePanel` reads `defaultSize` only on mount, so a remount when the
+ * mode flips would resurrect a stale width). `display: contents` keeps them
+ * in the tree but out of layout.
+ */
+const inFlowStyle: CSSProperties = { display: 'contents' };
+
+/**
  * Zero-width flex host + optional backdrop for tablet overlay rails.
  *
  * The child (`DraggablePanel`) is left in normal flow inside the absolute
@@ -46,8 +54,6 @@ const OverlayRail = memo<OverlayRailProps>(
   ({ children, enabled, onDismiss, placement, showBackdrop }) => {
     const dismissible = enabled && Boolean(showBackdrop) && Boolean(onDismiss);
     useEscapeDismiss(dismissible, onDismiss);
-
-    if (!enabled) return children;
 
     return (
       <>
@@ -59,8 +65,8 @@ const OverlayRail = memo<OverlayRailProps>(
             onClick={onDismiss}
           />
         )}
-        <div style={overlayRailHostStyle}>
-          <div style={overlayPanelStyle(placement)}>{children}</div>
+        <div style={enabled ? overlayRailHostStyle : inFlowStyle}>
+          <div style={enabled ? overlayPanelStyle(placement) : inFlowStyle}>{children}</div>
         </div>
       </>
     );
