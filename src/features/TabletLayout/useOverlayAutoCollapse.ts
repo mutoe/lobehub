@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 
+import { useTabletLayoutStore } from './store';
+
 interface OverlayAutoCollapseParams {
   /** Whether the panel is currently in overlay mode. */
   enabled: boolean;
@@ -12,12 +14,17 @@ interface OverlayAutoCollapseParams {
 
 /**
  * Collapse a persisted-open panel when overlay mode starts, and put it back
- * when overlay mode ends (a desktop window dragged below the tablet width and
- * back). Mirrors `PortalAutoCollapse`: a viewport-driven collapse must not
- * silently become the user's persisted preference.
+ * when overlay mode ends (a window dragged below the tablet width and back, a
+ * tablet rotated from an auto-hide portrait to a docked landscape). Mirrors
+ * `PortalAutoCollapse`: a viewport-driven collapse must not silently become
+ * the user's persisted preference.
  *
- * While overlaid, the user's own opens/closes are left alone; the restore
- * only re-opens a panel the user has not opened themselves in the meantime.
+ * The pre-overlay state lives in the persisted tablet store rather than a ref,
+ * so a reload mid-session still restores it. While overlaid, the user's own
+ * opens/closes are left alone; the restore only re-opens a panel the user has
+ * not opened themselves in the meantime. A session that already has a saved
+ * value when overlay starts (the user picked an overlay mode from the open
+ * sidebar, or the page reloaded) is not collapsed again.
  */
 export const useOverlayAutoCollapse = ({
   enabled,
@@ -25,22 +32,23 @@ export const useOverlayAutoCollapse = ({
   ready,
   toggle,
 }: OverlayAutoCollapseParams) => {
-  const savedExpand = useRef<boolean | null>(null);
   const expandRef = useRef(expand);
   expandRef.current = expand;
 
   useEffect(() => {
     if (!ready) return;
+    const { navPanelExpandBeforeOverlay: saved, setNavPanelExpandBeforeOverlay: setSaved } =
+      useTabletLayoutStore.getState();
 
     if (enabled) {
-      if (savedExpand.current !== null) return;
-      savedExpand.current = expandRef.current;
+      if (saved !== null) return;
+      setSaved(expandRef.current);
       if (expandRef.current) toggle(false);
       return;
     }
 
-    if (savedExpand.current === null) return;
-    if (savedExpand.current && !expandRef.current) toggle(true);
-    savedExpand.current = null;
+    if (saved === null) return;
+    if (saved && !expandRef.current) toggle(true);
+    setSaved(null);
   }, [enabled, ready, toggle]);
 };

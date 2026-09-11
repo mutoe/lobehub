@@ -4,7 +4,7 @@ import { type CSSProperties, type ReactNode } from 'react';
 import { memo } from 'react';
 
 import ToggleLeftPanelButton, { isMacDesktop } from '@/features/NavPanel/ToggleLeftPanelButton';
-import { useIsTabletViewport } from '@/features/TabletLayout/useIsTabletViewport';
+import { useIsNavPanelOverlay } from '@/features/TabletLayout/useTabletNavPanelMode';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 
@@ -37,7 +37,7 @@ const NavHeader = memo<NavHeaderProps>(
     ...rest
   }) => {
     const expand = useGlobalStore(systemStatusSelectors.showLeftPanel);
-    const overlayNav = useIsTabletViewport();
+    const overlayNav = useIsNavPanelOverlay();
 
     const noContent = !left && !right && !children;
 

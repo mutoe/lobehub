@@ -12,8 +12,8 @@ import { USER_DROPDOWN_ICON_ID } from '@/features/NavPanel/constants';
 import { TOGGLE_BUTTON_ID } from '@/features/NavPanel/ToggleLeftPanelButton';
 import OverlayRail from '@/features/TabletLayout/OverlayRail';
 import { useDismissOnNavigate } from '@/features/TabletLayout/useDismissOnNavigate';
-import { useIsTabletViewport } from '@/features/TabletLayout/useIsTabletViewport';
 import { useOverlayAutoCollapse } from '@/features/TabletLayout/useOverlayAutoCollapse';
+import { useTabletNavPanelMode } from '@/features/TabletLayout/useTabletNavPanelMode';
 import { useActiveLocation } from '@/hooks/useActiveLocation';
 import { useGlobalStore } from '@/store/global';
 import {
@@ -113,6 +113,15 @@ const draggableStyles = createStaticStyles(({ css, cssVar }) => ({
         width: 14px !important;
         opacity: 1;
       }
+
+      /* The resize handle straddles the panel edge and the outer half is
+         clipped by the panel's overflow, leaving ~5px for a finger. Pull it
+         fully inside and widen it where there is no hover to reveal it. */
+      .ant-draggable-panel-right-handle {
+        inset-inline-end: 0;
+        transform: none;
+        width: 20px;
+      }
     }
   `,
 }));
@@ -138,8 +147,9 @@ export const NavPanelDraggable = memo<NavPanelDraggableProps>(({ activeContent, 
     systemStatusSelectors.isStatusInit(s),
   ]);
   const handleSizeChange = useNavPanelSizeChangeHandler();
-  // Tablet: the nav hangs over the transcript instead of taking a 280px column.
-  const overlay = useIsTabletViewport();
+  // Tablet: depending on the chosen mode the nav hangs over the transcript
+  // instead of taking a 280px column, and may close once a destination is picked.
+  const { dismissOnNavigate, overlay } = useTabletNavPanelMode();
   useOverlayAutoCollapse({
     enabled: overlay,
     expand: Boolean(expand),
@@ -149,7 +159,7 @@ export const NavPanelDraggable = memo<NavPanelDraggableProps>(({ activeContent, 
   // Picking a destination inside the overlaid rail closes it.
   const { pathname } = useActiveLocation();
   useDismissOnNavigate({
-    active: overlay && Boolean(expand),
+    active: dismissOnNavigate && Boolean(expand),
     onDismiss: () => togglePanel(false),
     pathname,
   });
