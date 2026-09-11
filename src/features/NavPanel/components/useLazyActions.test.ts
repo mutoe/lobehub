@@ -40,6 +40,14 @@ describe('useLazyActions', () => {
     expect(result.current.node).toBe('actions');
   });
 
+  // Touch pointers never hover a row, so NavItem asks for the actions up front.
+  it('evaluates the thunk on first render when asked to start mounted', () => {
+    const actions = vi.fn(() => 'actions');
+    const { result } = renderHook(() => useLazyActions(actions, true));
+
+    expect(result.current.node).toBe('actions');
+  });
+
   it('is a no-op for a plain node', () => {
     const { result } = renderHook(() => useLazyActions('actions'));
 

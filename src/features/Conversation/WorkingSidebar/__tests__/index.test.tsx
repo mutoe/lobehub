@@ -160,6 +160,12 @@ vi.mock('motion/react-m', () => ({
   ),
 }));
 
+const tabletViewport = vi.hoisted(() => ({ current: false }));
+
+vi.mock('@/features/TabletLayout/useIsTabletViewport', () => ({
+  useIsTabletViewport: () => tabletViewport.current,
+}));
+
 vi.mock('@/features/RightPanel', () => ({
   default: (props: CapturedRightPanelProps) => {
     rightPanel.current = props;
@@ -439,6 +445,7 @@ beforeEach(() => {
   reviewState.workingDirectory = undefined;
   dropdownMenuState.onOpenChangeComplete = undefined;
   dropdownMenuState.items = [];
+  tabletViewport.current = false;
   globalStore.status.workingSidebarWidth = 360;
   globalStore.status.showRightPanel = true;
   globalStore.status.showWorkingOverview = true;
@@ -655,6 +662,30 @@ describe('AgentWorkingSidebar — controlled panel width', () => {
 
     // 600 - 420 = 180 < the 300 minimum — nothing to clamp to, so it hides
     expect(rightPanel.current?.expand).toBe(false);
+  });
+
+  // Tablet: the chat layout hangs the sidebar over the transcript, so the row
+  // budget no longer decides whether it can open — only `showRightPanel` does.
+  it('keeps the panel open on a tablet row that would not fit a third column', () => {
+    tabletViewport.current = true;
+
+    render(<AgentWorkingSidebar availableWidth={600} />);
+
+    expect(rightPanel.current?.expand).toBe(true);
+    // Regression: positioning the DraggablePanel itself `absolute` escaped its
+    // own `width: 0; overflow: hidden` collapse clip and pinned it open. The
+    // overlay wrapper lives in the chat layout; the panel keeps normal flow.
+    expect(rightPanel.current?.style?.position).toBeUndefined();
+  });
+
+  it('yields the in-flow Overview card on tablet even when the budget would fit it', () => {
+    tabletViewport.current = true;
+    globalStore.status.showRightPanel = false;
+
+    // 768 - 420 = 348 >= 300: desktop would show the card beside the transcript
+    render(<AgentWorkingSidebar availableWidth={768} />);
+
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
 
   it('also yields the Overview card when the conversation width budget is too small', () => {

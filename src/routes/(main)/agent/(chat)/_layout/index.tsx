@@ -9,6 +9,7 @@ import { Outlet } from 'react-router';
 import ChatTerminalPanel from '@/features/ChatTerminal';
 import AgentWorkingSidebar from '@/features/Conversation/WorkingSidebar';
 import OverviewSlot from '@/features/Conversation/WorkingSidebar/OverviewSlot';
+import WorkingPanelOverlay from '@/features/TabletLayout/WorkingPanelOverlay';
 import ChatHeader from '@/routes/(main)/agent/features/Conversation/Header';
 import Portal from '@/routes/(main)/agent/features/Portal';
 
@@ -61,7 +62,9 @@ const ChatLayout = memo(() => {
               </Flexbox>
             </Flexbox>
             <Portal />
-            <AgentWorkingSidebar availableWidth={rowSize?.width} />
+            <WorkingPanelOverlay>
+              <AgentWorkingSidebar availableWidth={rowSize?.width} />
+            </WorkingPanelOverlay>
           </Flexbox>
           <ChatTerminalPanel />
         </Flexbox>
