@@ -11,11 +11,11 @@ import { memo } from 'react';
 import { flushSync } from 'react-dom';
 
 import { DESKTOP_HEADER_ICON_SMALL_SIZE } from '@/const/layoutTokens';
+import NavPanelHeaderToggle from '@/features/TabletLayout/NavPanelHeaderToggle';
 import { useWorkspaceAwareNavigate } from '@/features/Workspace/useWorkspaceAwareNavigate';
 import { isModifierClick } from '@/utils/navigation';
 
 import BackButton from './components/BackButton';
-import ToggleLeftPanelButton from './ToggleLeftPanelButton';
 
 const prefixCls = 'ant';
 
@@ -126,7 +126,7 @@ const SideBarHeaderLayout = memo<SideBarHeaderLayoutProps>(
       >
         {leftContent}
         <Flexbox horizontal align={'center'} gap={2} justify={'flex-end'}>
-          {showTogglePanelButton && <ToggleLeftPanelButton />}
+          {showTogglePanelButton && <NavPanelHeaderToggle />}
           {right}
         </Flexbox>
       </Flexbox>
