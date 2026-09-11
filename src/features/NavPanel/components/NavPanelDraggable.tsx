@@ -11,8 +11,10 @@ import Footer from '@/features/HomeSidebar/Footer';
 import { USER_DROPDOWN_ICON_ID } from '@/features/NavPanel/constants';
 import { TOGGLE_BUTTON_ID } from '@/features/NavPanel/ToggleLeftPanelButton';
 import OverlayRail from '@/features/TabletLayout/OverlayRail';
+import { useDismissOnNavigate } from '@/features/TabletLayout/useDismissOnNavigate';
 import { useIsTabletViewport } from '@/features/TabletLayout/useIsTabletViewport';
 import { useOverlayAutoCollapse } from '@/features/TabletLayout/useOverlayAutoCollapse';
+import { useActiveLocation } from '@/hooks/useActiveLocation';
 import { useGlobalStore } from '@/store/global';
 import {
   NAV_PANEL_MAX_WIDTH,
@@ -143,6 +145,13 @@ export const NavPanelDraggable = memo<NavPanelDraggableProps>(({ activeContent, 
     expand: Boolean(expand),
     ready: isStatusInit,
     toggle: togglePanel,
+  });
+  // Picking a destination inside the overlaid rail closes it.
+  const { pathname } = useActiveLocation();
+  useDismissOnNavigate({
+    active: overlay && Boolean(expand),
+    onDismiss: () => togglePanel(false),
+    pathname,
   });
 
   // Defer DraggablePanel mount until system status hydrates; otherwise defaultSize
