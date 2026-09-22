@@ -48,7 +48,6 @@ const TABS = [
   { key: 'identities', titleKey: 'tab.identities', url: '/memory/identities' },
   { key: 'contexts', titleKey: 'tab.contexts', url: '/memory/contexts' },
   { key: 'preferences', titleKey: 'tab.preferences', url: '/memory/preferences' },
-  { key: 'experiences', titleKey: 'tab.experiences', url: '/memory/experiences' },
   { key: 'activities', titleKey: 'tab.activities', url: '/memory/activities' },
 ] as const;
 

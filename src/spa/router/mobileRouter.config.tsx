@@ -372,13 +372,6 @@ export const sharedMainAreaChildren: RouteObject[] = [
       },
       {
         element: dynamicElement(
-          () => import('@/routes/(main)/memory/experiences'),
-          'Mobile > Memory > Experiences',
-        ),
-        path: 'experiences',
-      },
-      {
-        element: dynamicElement(
           () => import('@/routes/(main)/memory/activities'),
           'Mobile > Memory > Activities',
         ),
