@@ -30,7 +30,7 @@ describe('mobileRouter fork routes', () => {
     expect(source).toContain("import('@/routes/(mobile)/memory/_layout')");
     expect(source).toContain("import('@/routes/(main)/memory/(home)')");
     expect(source).toContain("path: 'memory'");
-    for (const tab of ['identities', 'contexts', 'preferences', 'experiences', 'activities']) {
+    for (const tab of ['identities', 'contexts', 'preferences', 'activities']) {
       expect(source).toContain(`path: '${tab}'`);
     }
   });
