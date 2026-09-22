@@ -29,7 +29,6 @@ const MOBILE_NAV_ROUTES = new Set([
   '/memory/identities',
   '/memory/contexts',
   '/memory/preferences',
-  '/memory/experiences',
   '/memory/activities',
   '/resource',
   '/me',

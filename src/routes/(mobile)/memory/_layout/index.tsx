@@ -1,7 +1,6 @@
 'use client';
 
-import { Flexbox } from '@lobehub/ui';
-import { createStaticStyles, cx } from 'antd-style';
+import { createStaticStyles, cx, Flexbox } from '@lobehub/ui';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
@@ -48,7 +47,6 @@ const TABS = [
   { key: 'identities', titleKey: 'tab.identities', url: '/memory/identities' },
   { key: 'contexts', titleKey: 'tab.contexts', url: '/memory/contexts' },
   { key: 'preferences', titleKey: 'tab.preferences', url: '/memory/preferences' },
-  { key: 'experiences', titleKey: 'tab.experiences', url: '/memory/experiences' },
   { key: 'activities', titleKey: 'tab.activities', url: '/memory/activities' },
 ] as const;
 
