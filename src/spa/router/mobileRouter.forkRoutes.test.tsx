@@ -12,9 +12,20 @@ import { describe, expect, it } from 'vitest';
 describe('mobileRouter fork routes', () => {
   const readConfig = () =>
     readFile(path.join(process.cwd(), 'src/spa/router/mobileRouter.config.tsx'), 'utf8');
+  const readForkRoutes = () =>
+    readFile(path.join(process.cwd(), 'src/spa/router/mobileRouter.forkRoutes.tsx'), 'utf8');
+
+  it('spreads the fork route list into the shared main area', async () => {
+    const source = await readConfig();
+
+    expect(source).toContain(
+      "import { forkMobileMainAreaRoutes } from '@/spa/router/mobileRouter.forkRoutes';",
+    );
+    expect(source).toContain('...forkMobileMainAreaRoutes,');
+  });
 
   it('registers image and video generation routes in the shared main area', async () => {
-    const source = await readConfig();
+    const source = await readForkRoutes();
 
     expect(source).toContain("import('@/routes/(mobile)/image')");
     expect(source).toContain("import('@/routes/(mobile)/image/_layout')");
@@ -25,7 +36,7 @@ describe('mobileRouter fork routes', () => {
   });
 
   it('registers memory routes in the shared main area', async () => {
-    const source = await readConfig();
+    const source = await readForkRoutes();
 
     expect(source).toContain("import('@/routes/(mobile)/memory/_layout')");
     expect(source).toContain("import('@/routes/(main)/memory/(home)')");
@@ -36,7 +47,7 @@ describe('mobileRouter fork routes', () => {
   });
 
   it('registers resource / library routes in the shared main area', async () => {
-    const source = await readConfig();
+    const source = await readForkRoutes();
 
     expect(source).toContain("import('@/routes/(mobile)/resource/_layout')");
     expect(source).toContain("import('@/routes/(main)/resource/(home)')");
