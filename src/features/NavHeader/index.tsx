@@ -4,6 +4,7 @@ import { type CSSProperties, type ReactNode } from 'react';
 import { memo } from 'react';
 
 import ToggleLeftPanelButton, { isMacDesktop } from '@/features/NavPanel/ToggleLeftPanelButton';
+import { useIsTabletViewport } from '@/features/TabletLayout/useIsTabletViewport';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 
@@ -36,12 +37,15 @@ const NavHeader = memo<NavHeaderProps>(
     ...rest
   }) => {
     const expand = useGlobalStore(systemStatusSelectors.showLeftPanel);
+    const overlayNav = useIsTabletViewport();
 
     const noContent = !left && !right && !children;
 
     // When empty, this header only rendered to host the collapse toggle. Hide it
-    // when expanded, and also on macOS desktop where the toggle moved to the titlebar.
-    if (noContent && (expand || isMacDesktop)) return;
+    // when expanded, and also on macOS desktop where the toggle moved to the titlebar
+    // (the toggle renders nothing there, so an overlay nav must not keep the bar).
+    // Tablet overlay otherwise needs a persistent (not hover-gated) toggle.
+    if (noContent && (isMacDesktop || (expand && !overlayNav))) return;
 
     return (
       <Flexbox
@@ -66,7 +70,9 @@ const NavHeader = memo<NavHeaderProps>(
             justify={'flex-start'}
             style={styles?.left}
           >
-            {showTogglePanelButton && !expand && <ToggleLeftPanelButton />}
+            {showTogglePanelButton && (!expand || overlayNav) && (
+              <ToggleLeftPanelButton id={overlayNav ? null : undefined} />
+            )}
             {left}
           </Flexbox>
           {children && (

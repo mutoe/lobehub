@@ -7,6 +7,7 @@ import { type ReactNode, useRef } from 'react';
 import ChatTerminalPanel from '@/features/ChatTerminal';
 import AgentWorkingSidebar from '@/features/Conversation/WorkingSidebar';
 import OverviewSlot from '@/features/Conversation/WorkingSidebar/OverviewSlot';
+import WorkingPanelOverlay from '@/features/TabletLayout/WorkingPanelOverlay';
 import HeaderSlot from '@/routes/(main)/agent/(chat)/_layout/HeaderSlot';
 import Portal from '@/routes/(main)/agent/features/Portal';
 
@@ -63,7 +64,9 @@ const ConversationWorkspace = ({
               </Flexbox>
             </Flexbox>
             <Portal />
-            <AgentWorkingSidebar availableWidth={rowSize?.width} />
+            <WorkingPanelOverlay>
+              <AgentWorkingSidebar availableWidth={rowSize?.width} />
+            </WorkingPanelOverlay>
           </Flexbox>
           <ChatTerminalPanel />
         </Flexbox>

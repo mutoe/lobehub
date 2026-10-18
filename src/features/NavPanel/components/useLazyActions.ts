@@ -11,9 +11,9 @@ export type LazyActions = ReactNode | (() => ReactNode);
  * open dropdown survives the pointer leaving the row. A plain node passes
  * straight through — only the thunk form is deferred.
  */
-export const useLazyActions = (actions?: LazyActions) => {
+export const useLazyActions = (actions?: LazyActions, initialMounted = false) => {
   const isLazy = typeof actions === 'function';
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(initialMounted);
 
   const mount = useCallback(() => {
     if (isLazy) setMounted(true);

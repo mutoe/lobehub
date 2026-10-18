@@ -16,6 +16,7 @@ import {
 import { type FocusEvent, type PointerEvent, type ReactNode } from 'react';
 import { memo } from 'react';
 
+import { hasHoverNonePointer, HOVER_NONE_CSS } from '@/utils/hoverNone';
 import { isModifierClick } from '@/utils/navigation';
 
 import { type LazyActions, useLazyActions } from './useLazyActions';
@@ -61,6 +62,13 @@ const styles = createStaticStyles(({ css }) => ({
       padding-inline-end: 6px;
 
       opacity: 0;
+    }
+
+    ${HOVER_NONE_CSS} {
+      .${ACTION_CLASS_NAME} {
+        width: unset;
+        opacity: 1;
+      }
     }
   `,
 }));
@@ -129,7 +137,12 @@ const NavItem = memo<NavItemProps>(
     onPointerEnter,
     ...rest
   }) => {
-    const { mount: mountLazyActions, node: renderedActions } = useLazyActions(actions);
+    // Touch pointers never hover a row, so the actions they can see (via the
+    // hover-none CSS above) must exist from the first paint.
+    const { mount: mountLazyActions, node: renderedActions } = useLazyActions(
+      actions,
+      hasHoverNonePointer(),
+    );
 
     const handlePointerEnter = (e: PointerEvent<HTMLDivElement>) => {
       mountLazyActions();
